@@ -5,6 +5,59 @@
  */
 
 // ============================================================================
+// Seeded Random Number Generator
+// ============================================================================
+
+/**
+ * Simple seeded random number generator using xorshift32
+ */
+class SeededRandom {
+    constructor(seed = null) {
+        if (seed === null || seed === '') {
+            // Use true randomness if no seed provided
+            this.seed = Math.floor(Math.random() * 0x7fffffff);
+        } else {
+            // Hash the seed string to get a number
+            this.seed = this.hashString(seed);
+        }
+        this.current = this.seed;
+    }
+
+    /**
+     * Simple hash function for strings
+     * @param {string} str
+     * @returns {number}
+     */
+    hashString(str) {
+        let hash = 5381;
+        for (let i = 0; i < str.length; i++) {
+            hash = ((hash << 5) + hash) ^ str.charCodeAt(i);
+        }
+        return Math.abs(hash) % 0x7fffffff || 1;
+    }
+
+    /**
+     * Generate next random number (0 to 1)
+     * @returns {number}
+     */
+    next() {
+        this.current ^= this.current << 13;
+        this.current ^= this.current >> 17;
+        this.current ^= this.current << 5;
+        return (this.current >>> 0) / 0x100000000;
+    }
+
+    /**
+     * Generate random integer between 0 and max (exclusive)
+     * @param {number} max
+     * @returns {number}
+     */
+    nextInt(max) {
+        return Math.floor(this.next() * max);
+    }
+}
+
+// ============================================================================
 // Game Configuration
 // ============================================================================
 
@@ -29,7 +82,9 @@ const CONFIG = {
 // ============================================================================
 
 class Mastermind {
-    constructor() {
+    constructor(seed = null) {
+        this.seed = seed;
+        this.rng = new SeededRandom(seed);
         this.secretCode = [];
         this.guesses = [];
         this.currentGuess = [];
@@ -56,7 +111,7 @@ class Mastermind {
     generateRandomCode() {
         const code = [];
         for (let i = 0; i < CONFIG.CODE_LENGTH; i++) {
-            const randomIndex = Math.floor(Math.random() * CONFIG.COLORS.length);
+            const randomIndex = this.rng.nextInt(CONFIG.COLORS.length);
             code.push(CONFIG.COLORS[randomIndex]);
         }
         return code;
@@ -214,8 +269,9 @@ class Mastermind {
 // ============================================================================
 
 class MastermindUI {
-    constructor() {
-        this.game = new Mastermind();
+    constructor(seed = null) {
+        this.currentSeed = seed;
+        this.game = new Mastermind(seed);
         this.initializeUI();
         this.attachEventListeners();
     }
@@ -424,9 +480,33 @@ class MastermindUI {
     }
 
     /**
+     * Start a new game with a specific seed
+     * @param {string} seed - Seed phrase for code generation
+     */
+    newGameWithSeed(seed) {
+        this.currentSeed = seed;
+        this.game = new Mastermind(seed);
+        document.getElementById('secretCodeContainer').classList.add('hidden');
+        this.initializeUI();
+        this.renderGameBoard();
+    }
+
+    /**
      * Attach event listeners to buttons
      */
     attachEventListeners() {
+        // Seed input button
+        document.getElementById('setSeedBtn').addEventListener('click', () => {
+            this.handleSetSeed();
+        });
+
+        // Allow Enter key in seed input
+        document.getElementById('seedInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                this.handleSetSeed();
+            }
+        });
+
         // Submit guess button
         document.getElementById('submitBtn').addEventListener('click', () => {
             this.submitGuess();
@@ -440,15 +520,26 @@ class MastermindUI {
 
         // New game button
         document.getElementById('newGameBtn').addEventListener('click', () => {
+            document.getElementById('seedInput').value = '';
             this.newGame();
         });
 
         // Allow Enter key to submit guess
         document.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter' && !this.game.isGameOver()) {
+            if (e.key === 'Enter' && !this.game.isGameOver() && e.target.id !== 'seedInput') {
                 this.submitGuess();
             }
         });
+    }
+
+    /**
+     * Handle seed input and start new game
+     */
+    handleSetSeed() {
+        const seedInput = document.getElementById('seedInput');
+        const seed = seedInput.value.trim();
+        this.newGameWithSeed(seed || null);
+        // Keep the seed in the input for reference
     }
 
     /**

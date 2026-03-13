@@ -52,6 +52,56 @@ h1 {
     color: #999;
     font-size: 0.9em;
     font-weight: 400;
+    margin-bottom: 18px;
+}
+
+/* Seed Input Section */
+.seed-section {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid #f0f0f0;
+}
+
+.seed-input-group {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.seed-input {
+    flex: 1;
+    padding: 9px 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 0.9em;
+    font-family: 'Segoe UI', sans-serif;
+    transition: border-color 0.15s;
+}
+
+.seed-input:focus {
+    outline: none;
+    border-color: #333;
+    box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.05);
+}
+
+.btn-seed {
+    background: #333;
+    color: white;
+    padding: 9px 14px;
+    font-size: 0.9em;
+    white-space: nowrap;
+}
+
+.btn-seed:hover {
+    background: #222;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.seed-hint {
+    font-size: 0.75em;
+    color: #aaa;
+    margin: 0;
+    font-weight: 400;
 }
 
 /* Main Content */
@@ -410,6 +460,23 @@ footer {
         font-size: 0.85em;
     }
 
+    .seed-input-group {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .seed-input {
+        width: 100%;
+    }
+
+    .btn-seed {
+        width: 100%;
+    }
+
+    .seed-hint {
+        font-size: 0.7em;
+    }
+
     .guess-row {
         padding: 10px;
         gap: 8px;
@@ -474,6 +541,25 @@ footer {
     h1 {
         font-size: 1.6em;
         margin-bottom: 4px;
+    }
+
+    .subtitle {
+        font-size: 0.8em;
+        margin-bottom: 12px;
+    }
+
+    .seed-section {
+        padding-top: 12px;
+        margin-top: 12px;
+    }
+
+    .seed-input {
+        font-size: 0.85em;
+        padding: 8px 10px;
+    }
+
+    .seed-hint {
+        font-size: 0.65em;
     }
 
     .secret-code-container h2 {
