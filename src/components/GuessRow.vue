@@ -1,42 +1,30 @@
 <script setup>
 import { computed } from 'vue';
-import { CONFIG } from '../game/config.js';
 
 const props = defineProps({
-    guessNumber: {
-        type: Number,
-        required: true,
-    },
-    code: {
-        type: Array,
-        default: null,
-    },
-    feedback: {
-        type: Object,
-        default: null,
-    },
-    isActive: {
-        type: Boolean,
-        default: false,
-    },
+    guessNumber: { type: Number, required: true },
+    codeLength: { type: Number, required: true },
+    code: { type: Array, default: null },
+    feedback: { type: Object, default: null },
+    isActive: { type: Boolean, default: false },
 });
 
 const emit = defineEmits(['remove-at']);
 
 const displayPegs = computed(() => {
     const slots = [];
-    for (let i = 0; i < CONFIG.CODE_LENGTH; i++) {
+    for (let i = 0; i < props.codeLength; i++) {
         slots.push(props.code?.[i] ?? null);
     }
     return slots;
 });
 
 const keyPegs = computed(() => {
-    if (!props.feedback) return Array(CONFIG.CODE_LENGTH).fill('empty');
+    if (!props.feedback) return Array(props.codeLength).fill('empty');
     const pegs = [];
     for (let i = 0; i < props.feedback.blackPegs; i++) pegs.push('black');
     for (let i = 0; i < props.feedback.whitePegs; i++) pegs.push('white');
-    while (pegs.length < CONFIG.CODE_LENGTH) pegs.push('empty');
+    while (pegs.length < props.codeLength) pegs.push('empty');
     return pegs;
 });
 </script>
@@ -77,14 +65,6 @@ const keyPegs = computed(() => {
     margin-block: 8px;
 }
 
-.guess-row .guess-number {
-    font-weight: 600;
-    color: var(--text-secondary);
-    min-width: 35px;
-    text-align: right;
-    font-size: 0.9em;
-}
-
 .guess-row .guess-pegs {
     display: flex;
     gap: 8px;
@@ -103,11 +83,6 @@ const keyPegs = computed(() => {
 @media (max-width: 480px) {
     .guess-row {
         gap: 8px;
-    }
-
-    .guess-row .guess-number {
-        min-width: 30px;
-        font-size: 0.85em;
     }
 
     .guess-row .guess-pegs {

@@ -1,19 +1,20 @@
 import { ref, computed } from 'vue';
 import { Mastermind } from './Mastermind.js';
-import { CONFIG } from './config.js';
+import { MODES } from './config.js';
 
 export function useGame() {
-    let game = new Mastermind(null);
+    let game = new Mastermind(null, MODES.classic);
 
     const currentSeed = ref(null);
+    const gameConfig = ref(MODES.classic);
     const guesses = ref([]);
     const currentGuess = ref([]);
     const gameOver = ref(false);
     const won = ref(false);
     const secretCode = ref([...game.getSecretCode()]);
 
-    const remainingGuesses = computed(() => CONFIG.MAX_GUESSES - guesses.value.length);
-    const canSubmit = computed(() => currentGuess.value.length === CONFIG.CODE_LENGTH && !gameOver.value);
+    const remainingGuesses = computed(() => gameConfig.value.MAX_GUESSES - guesses.value.length);
+    const canSubmit = computed(() => currentGuess.value.length === gameConfig.value.CODE_LENGTH && !gameOver.value);
 
     function syncState() {
         guesses.value = [...game.getGuesses()];
@@ -23,20 +24,17 @@ export function useGame() {
         secretCode.value = [...game.getSecretCode()];
     }
 
-    function startNewGame() {
-        game = new Mastermind(currentSeed.value);
-        syncState();
-    }
-
-    function startRandomGame() {
+    function startRandomGame(mode = 'classic') {
         currentSeed.value = null;
-        game = new Mastermind(null);
+        gameConfig.value = MODES[mode];
+        game = new Mastermind(null, MODES[mode]);
         syncState();
     }
 
-    function startSeededGame(seed) {
+    function startSeededGame(seed, mode = 'classic') {
         currentSeed.value = seed || null;
-        game = new Mastermind(currentSeed.value);
+        gameConfig.value = MODES[mode];
+        game = new Mastermind(currentSeed.value, MODES[mode]);
         syncState();
     }
 
@@ -65,6 +63,7 @@ export function useGame() {
 
     return {
         currentSeed,
+        gameConfig,
         guesses,
         currentGuess,
         gameOver,
@@ -72,7 +71,6 @@ export function useGame() {
         secretCode,
         remainingGuesses,
         canSubmit,
-        startNewGame,
         startRandomGame,
         startSeededGame,
         addColor,

@@ -1,9 +1,10 @@
-import { CONFIG } from './config.js';
+import { MODES } from './config.js';
 import { SeededRandom } from './SeededRandom.js';
 
 export class Mastermind {
-    constructor(seed = null) {
+    constructor(seed = null, config = MODES.classic) {
         this.seed = seed;
+        this.config = config;
         this.rng = new SeededRandom(seed);
         this.secretCode = [];
         this.guesses = [];
@@ -24,15 +25,15 @@ export class Mastermind {
 
     generateRandomCode() {
         const code = [];
-        for (let i = 0; i < CONFIG.CODE_LENGTH; i++) {
-            const randomIndex = this.rng.nextInt(CONFIG.COLORS.length);
-            code.push(CONFIG.COLORS[randomIndex]);
+        for (let i = 0; i < this.config.CODE_LENGTH; i++) {
+            const randomIndex = this.rng.nextInt(this.config.COLORS.length);
+            code.push(this.config.COLORS[randomIndex]);
         }
         return code;
     }
 
     addColorToGuess(color) {
-        if (this.currentGuess.length < CONFIG.CODE_LENGTH) {
+        if (this.currentGuess.length < this.config.CODE_LENGTH) {
             this.currentGuess.push(color);
         }
     }
@@ -48,18 +49,18 @@ export class Mastermind {
     }
 
     submitGuess() {
-        if (this.currentGuess.length !== CONFIG.CODE_LENGTH) return null;
+        if (this.currentGuess.length !== this.config.CODE_LENGTH) return null;
         if (this.gameOver) return null;
 
         const feedback = this.generateFeedback(this.currentGuess);
         this.guesses.push({ code: [...this.currentGuess], feedback });
 
-        if (feedback.blackPegs === CONFIG.CODE_LENGTH) {
+        if (feedback.blackPegs === this.config.CODE_LENGTH) {
             this.gameOver = true;
             this.won = true;
         }
 
-        if (this.guesses.length >= CONFIG.MAX_GUESSES && !this.won) {
+        if (this.guesses.length >= this.config.MAX_GUESSES && !this.won) {
             this.gameOver = true;
             this.won = false;
         }
@@ -74,7 +75,7 @@ export class Mastermind {
         const secretCopy = [...this.secretCode];
         const guessCopy = [...guess];
 
-        for (let i = 0; i < CONFIG.CODE_LENGTH; i++) {
+        for (let i = 0; i < this.config.CODE_LENGTH; i++) {
             if (guessCopy[i] === secretCopy[i]) {
                 blackPegs++;
                 guessCopy[i] = null;
@@ -82,7 +83,7 @@ export class Mastermind {
             }
         }
 
-        for (let i = 0; i < CONFIG.CODE_LENGTH; i++) {
+        for (let i = 0; i < this.config.CODE_LENGTH; i++) {
             if (guessCopy[i] !== null) {
                 const index = secretCopy.indexOf(guessCopy[i]);
                 if (index !== -1) {
@@ -100,5 +101,5 @@ export class Mastermind {
     getSecretCode() { return this.secretCode; }
     getGuesses() { return this.guesses; }
     getCurrentGuess() { return this.currentGuess; }
-    getRemainingGuesses() { return CONFIG.MAX_GUESSES - this.guesses.length; }
+    getRemainingGuesses() { return this.config.MAX_GUESSES - this.guesses.length; }
 }

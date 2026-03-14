@@ -1,23 +1,22 @@
 <script setup>
 import { ref, watch, onMounted, onUnmounted } from 'vue';
 import TopMenu from './components/TopMenu.vue';
-import SeedSection from './components/SeedSection.vue';
 import SeedModal from './components/SeedModal.vue';
-import GameStatus from './components/GameStatus.vue';
-import SecretCode from './components/SecretCode.vue';
 import GameBoard from './components/GameBoard.vue';
 import GuessInput from './components/GuessInput.vue';
 import IntroScreen from './components/IntroScreen.vue';
+import ConfettiCanvas from './components/ConfettiCanvas.vue';
+import OutroScreen from './components/OutroScreen.vue';
 import { useGame } from './game/useGame.js';
 
 const {
     currentSeed,
+    gameConfig,
     guesses,
     currentGuess,
     gameOver,
     won,
     secretCode,
-    remainingGuesses,
     canSubmit,
     startRandomGame,
     startSeededGame,
@@ -30,18 +29,32 @@ const {
 const screen = ref('intro');
 const darkMode = ref(localStorage.getItem('mastermind-darkMode') === 'true');
 const showSeedModal = ref(false);
+const showConfetti = ref(false);
+
+watch(won, (val) => {
+    if (val) showConfetti.value = true;
+});
+
+watch(gameOver, (val) => {
+    if (val && !won.value) screen.value = 'outro';
+});
+
+function handleConfettiDone() {
+    showConfetti.value = false;
+    screen.value = 'outro';
+}
 
 function dailySeed() {
     return new Date().toISOString().slice(0, 10);
 }
 
-function handlePlayDaily() {
-    startSeededGame(dailySeed());
+function handlePlayDaily(mode) {
+    startSeededGame(dailySeed(), mode);
     screen.value = 'game';
 }
 
-function handlePlayRandom() {
-    startRandomGame();
+function handlePlayRandom(mode) {
+    startRandomGame(mode);
     screen.value = 'game';
 }
 
@@ -60,14 +73,6 @@ function toggleDarkMode() {
 
 function handleNewGame() {
     screen.value = 'intro';
-}
-
-function handleEnterSeed() {
-    showSeedModal.value = true;
-}
-
-function handleRandomGame() {
-    startRandomGame();
 }
 
 function handleSeedConfirm(seed) {
@@ -101,6 +106,18 @@ onUnmounted(() => {
         @play-random="handlePlayRandom"
     />
 
+    <OutroScreen
+        v-else-if="screen === 'outro'"
+        :won="won"
+        :guess-count="guesses.length"
+        :guesses="guesses"
+        :secret-code="secretCode"
+        :seed="currentSeed"
+        :max-guesses="gameConfig.MAX_GUESSES"
+        :code-length="gameConfig.CODE_LENGTH"
+        @play-again="handleNewGame"
+    />
+
     <template v-else>
         <TopMenu
             :dark-mode="darkMode"
@@ -110,25 +127,19 @@ onUnmounted(() => {
 
         <div class="container">
             <main>
-                <SecretCode v-if="gameOver" :secret-code="secretCode" />
-
-                <!-- <GameStatus
-                    :game-over="gameOver"
-                    :won="won"
-                    :guess-count="guesses.length"
-                    :remaining-guesses="remainingGuesses"
-                /> -->
-
                 <GameBoard
                     :guesses="guesses"
                     :current-guess="currentGuess"
                     :game-over="gameOver"
+                    :max-guesses="gameConfig.MAX_GUESSES"
+                    :code-length="gameConfig.CODE_LENGTH"
                     @remove-at="removeColorAt"
                 />
 
                 <GuessInput
                     v-if="!gameOver"
                     :can-submit="canSubmit"
+                    :colors="gameConfig.COLORS"
                     @add-color="addColor"
                     @clear="clearGuess"
                     @submit="submitGuess"
@@ -150,23 +161,13 @@ onUnmounted(() => {
             @cancel="handleSeedCancel"
         />
     </template>
+
+    <ConfettiCanvas v-if="showConfetti" @done="handleConfettiDone" />
 </template>
 
 <style scoped>
-header {
-    text-align: center;
-    margin-bottom: 24px;
-}
-
 .container {
     height: 100%;
-}
-
-.subtitle {
-    color: var(--text-secondary);
-    font-size: 0.9em;
-    font-weight: 400;
-    margin-bottom: 18px;
 }
 
 main {
@@ -186,19 +187,8 @@ footer {
 }
 
 @media (max-width: 480px) {
-    .subtitle {
-        font-size: 0.85em;
-    }
-
     footer {
         font-size: 0.75em;
-    }
-}
-
-@media (max-width: 380px) {
-    .subtitle {
-        font-size: 0.8em;
-        margin-bottom: 12px;
     }
 }
 </style>

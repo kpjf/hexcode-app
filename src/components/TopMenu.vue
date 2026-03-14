@@ -13,7 +13,7 @@ defineEmits(['toggle-dark-mode', 'new-game']);
     <div class="top-menu">
         <div class="menu-content">
             <div class="menu-left">
-                <h2>huedunnit</h2>
+                <h2>HEXCode</h2>
             </div>
             <div class="menu-right">
                 <button

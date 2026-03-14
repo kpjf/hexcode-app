@@ -1,5 +1,7 @@
 <script setup>
-import { CONFIG } from '../game/config.js';
+defineProps({
+    colors: { type: Array, required: true },
+});
 
 defineEmits(['select']);
 </script>
@@ -7,7 +9,7 @@ defineEmits(['select']);
 <template>
     <div class="color-buttons">
         <button
-            v-for="color in CONFIG.COLORS"
+            v-for="color in colors"
             :key="color"
             class="color-btn peg"
             :class="color"

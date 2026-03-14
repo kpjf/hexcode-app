@@ -1,28 +1,20 @@
 <script setup>
 import { computed, ref, watch, nextTick } from 'vue';
 import GuessRow from './GuessRow.vue';
-import { CONFIG } from '../game/config.js';
 
 const props = defineProps({
-    guesses: {
-        type: Array,
-        required: true,
-    },
-    currentGuess: {
-        type: Array,
-        required: true,
-    },
-    gameOver: {
-        type: Boolean,
-        required: true,
-    },
+    guesses: { type: Array, required: true },
+    currentGuess: { type: Array, required: true },
+    gameOver: { type: Boolean, required: true },
+    maxGuesses: { type: Number, required: true },
+    codeLength: { type: Number, required: true },
 });
 
 const emit = defineEmits(['remove-at']);
 
 const rows = computed(() => {
     const result = [];
-    for (let i = 0; i < CONFIG.MAX_GUESSES; i++) {
+    for (let i = 0; i < props.maxGuesses; i++) {
         if (i < props.guesses.length) {
             result.push({
                 type: 'completed',
@@ -58,6 +50,7 @@ watch(
                 v-for="(row, i) in rows"
                 :key="i"
                 :guess-number="i + 1"
+                :code-length="codeLength"
                 :code="row.code"
                 :feedback="row.feedback"
                 :is-active="row.type === 'active'"

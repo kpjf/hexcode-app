@@ -2,10 +2,8 @@
 import ColorPicker from './ColorPicker.vue';
 
 defineProps({
-    canSubmit: {
-        type: Boolean,
-        required: true,
-    },
+    canSubmit: { type: Boolean, required: true },
+    colors: { type: Array, required: true },
 });
 
 const emit = defineEmits(['add-color', 'clear', 'submit']);
@@ -14,22 +12,13 @@ const emit = defineEmits(['add-color', 'clear', 'submit']);
 <template>
     <div class="input-section">
         <div class="color-selector">
-            <ColorPicker @select="emit('add-color', $event)" />
+            <ColorPicker :colors="colors" @select="emit('add-color', $event)" />
         </div>
         <div class="actions">
-            <button
-                class="btn btn-primary"
-                :disabled="!canSubmit"
-                @click="emit('submit')"
-            >
+            <button class="btn btn-primary" :disabled="!canSubmit" @click="emit('submit')">
                 Submit Guess
             </button>
-            <button
-                class="btn btn-secondary"
-                @click="emit('clear')"
-            >
-                Clear
-            </button>
+            <button class="btn btn-secondary" @click="emit('clear')">Clear</button>
         </div>
     </div>
 </template>
@@ -42,11 +31,6 @@ const emit = defineEmits(['add-color', 'clear', 'submit']);
     display: flex;
     align-items: center;
     gap: 16px;
-}
-
-.input-section.disabled {
-    opacity: 0.5;
-    pointer-events: none;
 }
 
 .color-selector {

@@ -193,8 +193,8 @@ html.dark-mode .key-peg.black {
 }
 
 .key-peg.white {
-    background: #ffffff;
-    border: 1px solid #999;
+    background: #b0b0b0;
+    border: 1px solid #888;
 }
 
 html.dark-mode .key-peg.white {

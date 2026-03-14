@@ -1,12 +1,15 @@
 <script setup>
-    const today = new Date().toLocaleDateString('en-US', {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-    });
+import { ref } from 'vue';
 
-    defineEmits(['play-daily', 'play-random']);
+const today = new Date().toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+});
+
+const mode = ref('classic');
+const emit = defineEmits(['play-daily', 'play-random']);
 </script>
 
 <template>
@@ -14,16 +17,38 @@
         <div class="intro-card">
             <div class="intro-logo">
                 <slot name="logo">
-                    <div class="logo-placeholder" />
+                    <img src="/images/logo.svg" />
                 </slot>
             </div>
 
-            <h1 class="intro-title">
-                Mastermind
-            </h1>
-            <p class="intro-description">
-                Break the secret code. A new puzzle every day.
-            </p>
+            <h1 class="intro-title">HEXCode</h1>
+            <p class="intro-description">Break the secret code. A new puzzle every day.</p>
+
+            <div class="mode-toggle">
+                <button
+                    class="mode-btn"
+                    :class="{ active: mode === 'classic' }"
+                    @click="mode = 'classic'"
+                >
+                    Classic
+                </button>
+                <button
+                    class="mode-btn"
+                    :class="{ active: mode === 'quick' }"
+                    @click="mode = 'quick'"
+                >
+                    Quick
+                </button>
+            </div>
+
+            <div class="mode-description">
+                <template v-if="mode === 'classic'">
+                    4 colours &middot; 8 choices &middot; 10 guesses
+                </template>
+                <template v-else>
+                    3 colours &middot; 6 choices &middot; 6 guesses
+                </template>
+            </div>
 
             <div class="intro-puzzle-date">
                 <span class="date-label">Today's Puzzle</span>
@@ -31,33 +56,17 @@
             </div>
 
             <div class="intro-actions">
-                <button
-                    class="btn btn-primary intro-btn"
-                    @click="$emit('play-daily')"
-                >
+                <button class="btn btn-primary intro-btn" @click="emit('play-daily', mode)">
                     Play Today's Puzzle
                 </button>
-                <button
-                    class="btn btn-secondary intro-btn"
-                    @click="$emit('play-random')"
-                >
+                <button class="btn btn-secondary intro-btn" @click="emit('play-random', mode)">
                     Random Game
                 </button>
             </div>
 
             <div class="intro-account">
-                <button
-                    class="btn btn-ghost"
-                    disabled
-                >
-                    Login
-                </button>
-                <button
-                    class="btn btn-ghost"
-                    disabled
-                >
-                    Subscribe
-                </button>
+                <button class="btn btn-ghost" disabled>Login</button>
+                <button class="btn btn-ghost" disabled>Subscribe</button>
             </div>
         </div>
     </div>
@@ -104,7 +113,40 @@
 .intro-description {
     color: var(--text-secondary);
     font-size: 0.95em;
-    margin-bottom: 28px;
+    margin-bottom: 20px;
+}
+
+.mode-toggle {
+    display: flex;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    padding: 3px;
+    margin-bottom: 10px;
+}
+
+.mode-btn {
+    flex: 1;
+    padding: 8px 0;
+    font-size: 0.9em;
+    font-weight: 600;
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.mode-btn.active {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.mode-description {
+    font-size: 0.8em;
+    color: var(--text-secondary);
+    margin-bottom: 20px;
+    letter-spacing: 0.02em;
 }
 
 .intro-puzzle-date {
