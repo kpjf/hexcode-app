@@ -31,6 +31,14 @@ export function useGame() {
         syncState();
     }
 
+    function restoreGame(seed, mode, savedState) {
+        currentSeed.value = seed;
+        gameConfig.value = MODES[mode];
+        game = new Mastermind(seed, MODES[mode]);
+        game.restoreState(savedState.guesses, savedState.currentGuess || []);
+        syncState();
+    }
+
     function startSeededGame(seed, mode = 'classic') {
         currentSeed.value = seed || null;
         gameConfig.value = MODES[mode];
@@ -73,6 +81,7 @@ export function useGame() {
         canSubmit,
         startRandomGame,
         startSeededGame,
+        restoreGame,
         addColor,
         removeColorAt,
         clearGuess,

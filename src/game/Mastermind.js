@@ -96,6 +96,21 @@ export class Mastermind {
         return { blackPegs, whitePegs };
     }
 
+    restoreState(guesses, currentGuess = []) {
+        this.guesses = guesses;
+        this.currentGuess = currentGuess;
+        if (guesses.length > 0) {
+            const last = guesses[guesses.length - 1];
+            if (last.feedback.blackPegs === this.config.CODE_LENGTH) {
+                this.gameOver = true;
+                this.won = true;
+            } else if (guesses.length >= this.config.MAX_GUESSES) {
+                this.gameOver = true;
+                this.won = false;
+            }
+        }
+    }
+
     isGameOver() { return this.gameOver; }
     hasWon() { return this.won; }
     getSecretCode() { return this.secretCode; }

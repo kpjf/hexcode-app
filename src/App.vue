@@ -8,6 +8,7 @@ import IntroScreen from './components/IntroScreen.vue';
 import ConfettiCanvas from './components/ConfettiCanvas.vue';
 import OutroScreen from './components/OutroScreen.vue';
 import { useGame } from './game/useGame.js';
+import { saveDailyState, loadDailyState } from './game/useDailyStorage.js';
 
 const {
     currentSeed,
@@ -20,6 +21,7 @@ const {
     canSubmit,
     startRandomGame,
     startSeededGame,
+    restoreGame,
     addColor,
     removeColorAt,
     clearGuess,
@@ -30,6 +32,7 @@ const screen = ref('intro');
 const darkMode = ref(localStorage.getItem('mastermind-darkMode') === 'true');
 const showSeedModal = ref(false);
 const showConfetti = ref(false);
+const currentMode = ref('classic');
 
 watch(won, (val) => {
     if (val) showConfetti.value = true;
@@ -49,9 +52,31 @@ function dailySeed() {
 }
 
 function handlePlayDaily(mode) {
-    startSeededGame(dailySeed(), mode);
-    screen.value = 'game';
+    currentMode.value = mode;
+    const date = dailySeed();
+    const saved = loadDailyState(date, mode);
+    if (saved) {
+        restoreGame(date, mode, saved);
+        screen.value = saved.gameOver ? 'outro' : 'game';
+    } else {
+        startSeededGame(date, mode);
+        screen.value = 'game';
+    }
 }
+
+watch(
+    guesses,
+    () => {
+        if (currentSeed.value === dailySeed()) {
+            saveDailyState(dailySeed(), currentMode.value, {
+                guesses: guesses.value,
+                gameOver: gameOver.value,
+                won: won.value,
+            });
+        }
+    },
+    { deep: true },
+);
 
 function handlePlayRandom(mode) {
     startRandomGame(mode);
