@@ -1,0 +1,252 @@
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&display=swap');
+
+  .flyer {
+    width: 100%;
+    max-width: 520px;
+    margin: 0 auto;
+    background: #0a0a0f;
+    border-radius: 20px;
+    overflow: hidden;
+    position: relative;
+    aspect-ratio: 9/16;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 0 40px;
+  }
+
+  .colour-grid {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+    height: 42%;
+    flex-shrink: 0;
+  }
+
+  .colour-grid div {
+    position: relative;
+  }
+
+  .colour-grid div::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom, transparent 40%, #0a0a0f);
+  }
+
+  .dark-overlay {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 44%;
+    background: linear-gradient(to bottom, transparent 50%, #0a0a0f 100%);
+    z-index: 2;
+    pointer-events: none;
+  }
+
+  .body {
+    position: relative;
+    z-index: 3;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    padding: 0 32px;
+    flex: 1;
+    justify-content: center;
+    gap: 0;
+  }
+
+  .icon-wrap {
+    width: 90px;
+    height: 90px;
+    border-radius: 22px;
+    overflow: hidden;
+    margin-bottom: 24px;
+    flex-shrink: 0;
+    position: relative;
+  }
+
+  .icon-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: repeat(4, 1fr);
+    width: 100%;
+    height: 100%;
+  }
+
+  .wordmark {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 78px;
+    color: #ffffff;
+    letter-spacing: 3px;
+    line-height: 1;
+    margin-bottom: 4px;
+    text-align: center;
+  }
+
+  .wordmark span {
+    color: #FF8800;
+  }
+
+  .tagline {
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    color: #ffffff66;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    text-align: center;
+    margin-bottom: 32px;
+  }
+
+  .divider {
+    width: 40px;
+    height: 1px;
+    background: #ffffff22;
+    margin: 0 auto 28px;
+  }
+
+  .features {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+    margin-bottom: 32px;
+  }
+
+  .feature-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: #ffffff88;
+    letter-spacing: 1px;
+  }
+
+  .feature-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .peg-row {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    margin-bottom: 32px;
+  }
+
+  .peg {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    box-shadow: 0 0 12px rgba(255,255,255,0.15);
+  }
+
+  .cta {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 16px;
+    letter-spacing: 4px;
+    color: #0a0a0f;
+    background: #ffffff;
+    padding: 12px 36px;
+    border-radius: 6px;
+  }
+
+  .hash-overlay {
+    position: absolute;
+    right: -30px;
+    top: 38%;
+    opacity: 0.04;
+    z-index: 1;
+  }
+</style>
+
+<div class="flyer">
+
+  <!-- Colour tile grid at top -->
+  <div class="colour-grid">
+    <div style="background:#FF0000"></div>
+    <div style="background:#0000FF"></div>
+    <div style="background:#FFFF00"></div>
+    <div style="background:#00CC00"></div>
+    <div style="background:#9933FF"></div>
+    <div style="background:#FF8800"></div>
+    <div style="background:#00FFFF"></div>
+    <div style="background:#FF00FF"></div>
+  </div>
+
+  <!-- Gradient fade from grid to dark -->
+  <div class="dark-overlay"></div>
+
+  <!-- Big faded # watermark -->
+  <div class="hash-overlay">
+    <svg width="320" height="320" viewBox="0 0 320 320">
+      <rect x="95" y="40" width="38" height="240" rx="12" fill="white"/>
+      <rect x="187" y="40" width="38" height="240" rx="12" fill="white"/>
+      <rect x="55" y="100" width="210" height="38" rx="12" fill="white"/>
+      <rect x="55" y="182" width="210" height="38" rx="12" fill="white"/>
+    </svg>
+  </div>
+
+  <div class="body">
+
+    <!-- App icon -->
+    <div class="icon-wrap">
+      <div class="icon-grid">
+        <div style="background:#FF0000"></div>
+        <div style="background:#0000FF"></div>
+        <div style="background:#FFFF00"></div>
+        <div style="background:#00CC00"></div>
+        <div style="background:#9933FF"></div>
+        <div style="background:#FF8800"></div>
+        <div style="background:#00FFFF"></div>
+        <div style="background:#FF00FF"></div>
+        <div style="background:#FFFF00"></div>
+        <div style="background:#FF0000"></div>
+        <div style="background:#9933FF"></div>
+        <div style="background:#FF8800"></div>
+        <div style="background:#00FFFF"></div>
+        <div style="background:#00CC00"></div>
+        <div style="background:#FF00FF"></div>
+        <div style="background:#0000FF"></div>
+      </div>
+    </div>
+
+    <!-- Wordmark -->
+    <div class="wordmark">HEX<span>Code</span></div>
+    <div class="tagline">crack the colour code</div>
+
+    <div class="divider"></div>
+
+    <!-- Colour pegs -->
+    <div class="peg-row">
+      <div class="peg" style="background:#FF0000"></div>
+      <div class="peg" style="background:#0000FF"></div>
+      <div class="peg" style="background:#FFFF00"></div>
+      <div class="peg" style="background:#00CC00"></div>
+      <div class="peg" style="background:#9933FF"></div>
+      <div class="peg" style="background:#FF8800"></div>
+      <div class="peg" style="background:#00FFFF"></div>
+      <div class="peg" style="background:#FF00FF"></div>
+    </div>
+
+    <!-- Features -->
+    <div class="features">
+      <div class="feature-row"><div class="feature-dot" style="background:#00CC00"></div>70+ progressive levels</div>
+      <div class="feature-row"><div class="feature-dot" style="background:#FF8800"></div>Daily challenges</div>
+      <div class="feature-row"><div class="feature-dot" style="background:#9933FF"></div>Coin-powered hints</div>
+      <div class="feature-row"><div class="feature-dot" style="background:#00FFFF"></div>8 colours. Infinite combinations.</div>
+    </div>
+
+    <!-- CTA -->
+    <div class="cta">Download Free</div>
+
+  </div>
+
+</div>

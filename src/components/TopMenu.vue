@@ -13,7 +13,10 @@ defineEmits(['toggle-dark-mode', 'new-game']);
     <div class="top-menu">
         <div class="menu-content">
             <div class="menu-left">
-                <h2>HEXCode</h2>
+                <RouterLink to="/">
+                    <img src="/images/logo.svg" width="22" alt="" />
+                    <h2>HEXCode</h2>
+                </RouterLink>
             </div>
             <div class="menu-right">
                 <button
@@ -48,6 +51,15 @@ defineEmits(['toggle-dark-mode', 'new-game']);
 .menu-left {
     flex: 1;
     text-align: left;
+}
+
+.menu-left a {
+    display: inline-flex;
+    justify-content: start;
+    align-items: center;
+    gap: 6px;
+    text-decoration: none;
+    color: #ffffffaa;
 }
 
 .menu-center {

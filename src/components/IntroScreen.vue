@@ -9,7 +9,7 @@ const today = new Date().toLocaleDateString('en-US', {
 });
 
 const mode = ref('classic');
-const emit = defineEmits(['play-daily', 'play-random']);
+const emit = defineEmits(['play-daily', 'play-random', 'login']);
 </script>
 
 <template>
@@ -50,10 +50,9 @@ const emit = defineEmits(['play-daily', 'play-random']);
                 </button>
             </div>
 
-            <!-- <div class="intro-account">
-                <button class="btn btn-ghost" disabled>Login</button>
-                <button class="btn btn-ghost" disabled>Subscribe</button>
-            </div> -->
+            <div class="intro-account">
+                <button class="btn btn-ghost" @click="emit('login')">Login</button>
+            </div>
 
             <div class="intro-puzzle-date">
                 <span class="date-label">Today's Puzzle</span>
@@ -192,8 +191,12 @@ const emit = defineEmits(['play-daily', 'play-random']);
     padding: 8px 20px;
     font-size: 0.88em;
     font-weight: 600;
-    cursor: not-allowed;
-    opacity: 0.6;
+    cursor: pointer;
     flex: 1;
+}
+
+.btn-ghost:hover {
+    color: var(--text-primary);
+    border-color: var(--text-secondary);
 }
 </style>
