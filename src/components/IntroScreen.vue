@@ -82,6 +82,9 @@ const emit = defineEmits(['play-daily', 'play-random']);
 
 .intro-logo {
     margin-bottom: 24px;
+
+    width: 200px;
+    margin: auto;
 }
 
 .logo-placeholder {

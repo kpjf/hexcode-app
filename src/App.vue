@@ -31,7 +31,7 @@ const {
 } = useGame();
 
 const screen = ref('intro');
-const darkMode = ref(localStorage.getItem('mastermind-darkMode') === 'true');
+const darkMode = ref(localStorage.getItem('mastermind-darkMode') !== 'false');
 const showSeedModal = ref(false);
 const showConfetti = ref(false);
 const currentMode = ref('classic');
