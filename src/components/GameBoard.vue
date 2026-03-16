@@ -37,10 +37,10 @@ const pegSize = ref(50);
 function computeSizes() {
     if (!containerEl.value) return;
     const N = props.maxGuesses;
-    const gap = 4;
+    const gap = 6;
     const available = containerEl.value.getBoundingClientRect().height;
     const rawRow = Math.floor((available - (N - 1) * gap) / N);
-    rowHeight.value = Math.min(rawRow, 60);
+    rowHeight.value = Math.min(rawRow, 52);
     pegSize.value = Math.min(rowHeight.value, 50);
 }
 
@@ -99,6 +99,6 @@ watch(() => props.maxGuesses, computeSizes);
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 4px;
+    gap: 6px;
 }
 </style>

@@ -56,19 +56,15 @@ const keyPegs = computed(() => {
     justify-content: center;
     gap: 8px;
     opacity: 0.45;
-    transform: scale(0.8);
-    transform-origin: center center;
-    transition: transform 0.15s ease, opacity 0.15s ease;
+    transition: opacity 0.15s ease;
 }
 
 .guess-row.active {
     opacity: 1;
-    transform: scale(1);
 }
 
 .guess-row.completed {
     opacity: 0.85;
-    transform: scale(0.9);
 }
 
 .guess-row .guess-pegs {
