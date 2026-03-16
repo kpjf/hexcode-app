@@ -1,8 +1,20 @@
 import { defineConfig } from 'vite';
+import { execSync } from 'child_process';
 import vue from '@vitejs/plugin-vue';
 import { VitePWA } from 'vite-plugin-pwa';
 
+const commitHash = (() => {
+    try {
+        return execSync('git rev-parse --short HEAD').toString().trim();
+    } catch {
+        return 'dev';
+    }
+})();
+
 export default defineConfig({
+    define: {
+        __COMMIT_HASH__: JSON.stringify(commitHash),
+    },
     plugins: [
         vue(),
         VitePWA({
@@ -10,6 +22,7 @@ export default defineConfig({
             workbox: {
                 skipWaiting: true,
                 clientsClaim: true,
+                cacheId: commitHash,
             },
             manifest: {
                 name: 'HEXCode',

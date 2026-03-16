@@ -1,6 +1,8 @@
 <script setup>
 import { ref } from 'vue';
 
+const commitHash = __COMMIT_HASH__;
+
 const today = new Date().toLocaleDateString('en-US', {
     weekday: 'long',
     year: 'numeric',
@@ -69,6 +71,7 @@ const emit = defineEmits(['play-daily', 'play-random', 'login', 'signup', 'logou
                 <span class="date-label">Today's Puzzle</span>
                 <span class="date-value">{{ today }}</span>
             </div>
+            <div class="version-hash">{{ commitHash }}</div>
         </div>
     </div>
 </template>
@@ -154,7 +157,6 @@ const emit = defineEmits(['play-daily', 'play-random', 'login', 'signup', 'logou
 .intro-puzzle-date {
     background: transparent;
     padding: 12px 16px;
-    margin-bottom: 24px;
     display: flex;
     flex-direction: column;
     gap: 4px;
@@ -209,5 +211,13 @@ const emit = defineEmits(['play-daily', 'play-random', 'login', 'signup', 'logou
 .btn-ghost:hover {
     color: var(--text-primary);
     border-color: var(--text-secondary);
+}
+
+.version-hash {
+    font-size: 0.7em;
+    color: var(--text-secondary);
+    opacity: 0.5;
+    font-family: monospace;
+    margin-bottom: 8px;
 }
 </style>
