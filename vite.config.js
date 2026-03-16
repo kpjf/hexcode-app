@@ -7,6 +7,10 @@ export default defineConfig({
         vue(),
         VitePWA({
             registerType: 'autoUpdate',
+            workbox: {
+                skipWaiting: true,
+                clientsClaim: true,
+            },
             manifest: {
                 name: 'HEXCode',
                 short_name: 'HEXCode',
