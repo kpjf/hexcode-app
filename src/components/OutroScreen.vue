@@ -12,7 +12,7 @@ const props = defineProps({
     stats: { type: Object, default: null },
 });
 
-const emit = defineEmits(['play-again', 'show-stats']);
+const emit = defineEmits(['play-again', 'show-stats', 'review']);
 
 const isDaily = computed(() => props.seed !== null);
 
@@ -48,14 +48,23 @@ function buildShareText() {
 }
 
 async function handleShare() {
-    try {
-        await navigator.clipboard.writeText(buildShareText());
-        copied.value = true;
-        setTimeout(() => {
-            copied.value = false;
-        }, 2000);
-    } catch {
-        // clipboard not available — silent fail
+    const text = buildShareText();
+    if (navigator.share) {
+        try {
+            await navigator.share({ text });
+        } catch {
+            // user cancelled or share failed — silent fail
+        }
+    } else {
+        try {
+            await navigator.clipboard.writeText(text);
+            copied.value = true;
+            setTimeout(() => {
+                copied.value = false;
+            }, 2000);
+        } catch {
+            // clipboard not available — silent fail
+        }
     }
 }
 </script>
@@ -101,6 +110,10 @@ async function handleShare() {
                     Stats
                 </button>
             </div>
+
+            <button class="btn btn-ghost review-toggle-btn" @click="$emit('review')">
+                Review Your Solution
+            </button>
 
             <div class="outro-footer">
                 <button class="btn btn-ghost" @click="$emit('play-again')">Play Again</button>
@@ -220,6 +233,11 @@ async function handleShare() {
 .outro-btn:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+}
+
+.review-toggle-btn {
+    width: 100%;
+    margin-bottom: 12px;
 }
 
 .outro-footer {

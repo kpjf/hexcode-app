@@ -155,6 +155,37 @@ onUnmounted(() => {
     document.removeEventListener('keydown', handleKeydown);
 });
 
+const reviewCopied = ref(false);
+
+function buildShareText() {
+    const today = new Date().toLocaleDateString('en-US', {
+        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+    });
+    const header = currentSeed.value ? `HEXCode - ${today}` : 'HEXCode - Random Game';
+    const score = `${guesses.value.length}/${gameConfig.value.MAX_GUESSES}`;
+    const grid = guesses.value
+        .map(({ feedback }) => {
+            const { blackPegs, whitePegs } = feedback;
+            const misses = gameConfig.value.CODE_LENGTH - blackPegs - whitePegs;
+            return '🟩'.repeat(blackPegs) + '🟨'.repeat(whitePegs) + '⬜'.repeat(misses);
+        })
+        .join('\n');
+    return `${header}\n${score}\n\n${grid}`;
+}
+
+async function handleReviewShare() {
+    const text = buildShareText();
+    if (navigator.share) {
+        try { await navigator.share({ text }); } catch { /* cancelled */ }
+    } else {
+        try {
+            await navigator.clipboard.writeText(text);
+            reviewCopied.value = true;
+            setTimeout(() => { reviewCopied.value = false; }, 2000);
+        } catch { /* unavailable */ }
+    }
+}
+
 const onLogin = () => router.push('/login');
 const onLogout = () => authStore.logout();
 const onStats = () => router.push('/stats');
@@ -184,6 +215,7 @@ const onStats = () => router.push('/stats');
         :stats="currentStats"
         @play-again="handleNewGame"
         @show-stats="screen = 'stats'"
+        @review="screen = 'review'"
     />
 
     <StatsScreen
@@ -221,6 +253,23 @@ const onStats = () => router.push('/stats');
                     @clear="clearGuess"
                     @submit="submitGuess"
                 />
+
+                <div v-if="screen === 'review'" class="review-bar">
+                    <button class="btn btn-secondary review-bar-btn" @click="screen = 'outro'">
+                        ← Back
+                    </button>
+                    <button class="btn btn-primary review-bar-btn" @click="handleReviewShare">
+                        {{ reviewCopied ? 'Copied!' : 'Share' }}
+                    </button>
+                    <button
+                        class="btn btn-secondary review-bar-btn"
+                        :disabled="!currentStats"
+                        :title="currentStats ? undefined : 'Play a daily puzzle to track stats'"
+                        @click="screen = 'stats'"
+                    >
+                        View Stats
+                    </button>
+                </div>
             </main>
         </div>
 
@@ -242,6 +291,18 @@ main {
     flex-direction: column;
     overflow: hidden;
     min-height: 0;
+}
+
+.review-bar {
+    display: flex;
+    gap: 10px;
+    padding: 14px 18px;
+    border-top: 1px solid var(--border-color);
+    flex-shrink: 0;
+}
+
+.review-bar-btn {
+    flex: 1;
 }
 
 footer {
