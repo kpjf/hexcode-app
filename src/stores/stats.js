@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { statsApi } from '../utils/auth-client.js'
+import { useAuthStore } from './auth.js'
 
 const STORAGE_KEY = 'hexcode-stats'
 
@@ -42,5 +43,18 @@ export const useStatsStore = defineStore('stats', () => {
         }
     }
 
-    return { stats, isLoading, error, fetchStats }
+    async function pushStats() {
+        const authStore = useAuthStore()
+        if (!authStore.isAuthenticated) return
+        try {
+            const local = loadLocalStats()
+            if (Object.keys(local).length > 0) {
+                await statsApi.post(local)
+            }
+        } catch {
+            // best-effort — ignore errors
+        }
+    }
+
+    return { stats, isLoading, error, fetchStats, pushStats }
 })

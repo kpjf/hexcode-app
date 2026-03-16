@@ -48,3 +48,18 @@ export function loadStats(mode) {
     const all = loadAll();
     return all[mode] ?? emptyModeStats();
 }
+
+export function checkAndExpireStreak(date, mode) {
+    const all = loadAll();
+    const stats = all[mode] ?? emptyModeStats();
+
+    // Already recorded today — nothing to expire
+    if (stats.lastRecordedDate === date) return;
+
+    // If last recorded was before yesterday, the streak has lapsed
+    if (stats.streak > 0 && stats.lastRecordedDate && stats.lastRecordedDate < yesterday(date)) {
+        stats.streak = 0;
+        all[mode] = stats;
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
+    }
+}

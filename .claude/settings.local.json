@@ -8,7 +8,8 @@
       "Bash(find c:/Users/keith/dev/emmet-fun/hexcode/node_modules -maxdepth 2 -name resvg* -o -name @resvg)",
       "Bash(export PATH=\"/c/Users/keith/AppData/Roaming/fnm/node-versions/v22.14.0/installation:$PATH\")",
       "Bash(npm --version)",
-      "Bash(xargs wc:*)"
+      "Bash(xargs wc:*)",
+      "Bash(find /c/Users/keith/dev/emmet-fun/hexcode -maxdepth 2 -name .env* -o -name *.config.js -o -name *.config.ts)"
     ]
   }
 }

@@ -11,8 +11,9 @@ import OutroScreen from '../components/OutroScreen.vue';
 import StatsScreen from '../components/StatsScreen.vue';
 import { useGame } from '../game/useGame.js';
 import { saveDailyState, loadDailyState } from '../game/useDailyStorage.js';
-import { recordResult, loadStats } from '../game/useStats.js';
+import { recordResult, loadStats, checkAndExpireStreak } from '../game/useStats.js';
 import { useAuthStore } from '../stores/auth.js';
+import { useStatsStore } from '../stores/stats.js';
 
 const {
     currentSeed,
@@ -34,6 +35,7 @@ const {
 
 const router = useRouter();
 const authStore = useAuthStore();
+const statsStore = useStatsStore();
 const screen = ref('intro');
 const darkMode = ref(localStorage.getItem('mastermind-darkMode') !== 'false');
 const showSeedModal = ref(false);
@@ -50,6 +52,7 @@ watch(gameOver, (val) => {
         if (currentSeed.value === dailySeed()) {
             recordResult(currentSeed.value, currentMode.value, won.value, guesses.value.length);
             currentStats.value = loadStats(currentMode.value);
+            statsStore.pushStats();
         }
         if (!won.value) screen.value = 'outro';
     }
@@ -71,6 +74,7 @@ function dailySeed() {
 function handlePlayDaily(mode) {
     currentMode.value = mode;
     const date = dailySeed();
+    checkAndExpireStreak(date, mode);
     const saved = loadDailyState(date, mode);
     if (saved) {
         restoreGame(date, mode, saved);
