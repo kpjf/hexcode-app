@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue';
+import { ref, watch, computed, onUnmounted } from 'vue';
 
 const props = defineProps({
     guessNumber: { type: Number, required: true },
@@ -19,13 +19,64 @@ const displayPegs = computed(() => {
     return slots;
 });
 
-const keyPegs = computed(() => {
+const allKeyPegs = computed(() => {
     if (!props.feedback) return Array(props.codeLength).fill('empty');
     const pegs = [];
     for (let i = 0; i < props.feedback.blackPegs; i++) pegs.push('black');
     for (let i = 0; i < props.feedback.whitePegs; i++) pegs.push('white');
     while (pegs.length < props.codeLength) pegs.push('empty');
     return pegs;
+});
+
+// Pre-populate if feedback already present on mount (restored game — no animation)
+const revealed = ref(props.feedback ? Array.from({ length: props.codeLength }, (_, i) => i) : []);
+const flippingOut = ref(-1);
+const flippingIn = ref(-1);
+const timers = [];
+
+watch(() => props.feedback, (newVal, oldVal) => {
+    if (newVal && oldVal === null) {
+        revealed.value = [];
+        flippingOut.value = -1;
+        flippingIn.value = -1;
+        timers.forEach(clearTimeout);
+        timers.length = 0;
+
+        for (let i = 0; i < props.codeLength; i++) {
+            timers.push(setTimeout(() => { flippingOut.value = i; }, i * 200));
+            timers.push(setTimeout(() => {
+                revealed.value.push(i);
+                flippingOut.value = -1;
+                flippingIn.value = i;
+            }, i * 200 + 150));
+            timers.push(setTimeout(() => { flippingIn.value = -1; }, i * 200 + 300));
+        }
+    }
+});
+
+// Guess peg flip-in when a colour is added
+const pegFlipIndex = ref(-1);
+let pegFlipTimer = null;
+
+watch(() => props.code?.length, (newLen, oldLen) => {
+    if ((newLen ?? 0) > (oldLen ?? 0)) {
+        clearTimeout(pegFlipTimer);
+        pegFlipIndex.value = (newLen ?? 0) - 1;
+        pegFlipTimer = setTimeout(() => { pegFlipIndex.value = -1; }, 200);
+    }
+});
+
+onUnmounted(() => {
+    timers.forEach(clearTimeout);
+    clearTimeout(pegFlipTimer);
+});
+
+const displayKeyPegs = computed(() => {
+    if (!props.feedback) return Array(props.codeLength).fill({ type: 'empty', phase: null });
+    return allKeyPegs.value.map((type, i) => ({
+        type: revealed.value.includes(i) ? type : 'empty',
+        phase: i === flippingOut.value ? 'out' : i === flippingIn.value ? 'in' : null,
+    }));
 });
 </script>
 
@@ -36,13 +87,18 @@ const keyPegs = computed(() => {
                 v-for="(color, i) in displayPegs"
                 :key="i"
                 class="peg"
-                :class="color ?? 'empty'"
+                :class="[color ?? 'empty', { 'peg-flip-in': i === pegFlipIndex }]"
                 :style="isActive && color ? { cursor: 'pointer' } : {}"
                 @click="isActive && color ? emit('remove-at', i) : undefined"
             />
         </div>
         <div class="key-pegs">
-            <div v-for="(type, i) in keyPegs" :key="i" class="key-peg" :class="type" />
+            <div
+                v-for="({ type, phase }, i) in displayKeyPegs"
+                :key="i"
+                class="key-peg"
+                :class="[type, phase && `flip-${phase}`]"
+            />
         </div>
     </div>
 </template>
@@ -72,6 +128,7 @@ const keyPegs = computed(() => {
     align-items: center;
     gap: 6px;
     flex: 0 0 auto;
+    perspective: 400px;
 }
 
 .guess-row .key-pegs {
@@ -83,5 +140,28 @@ const keyPegs = computed(() => {
     gap: 3px;
     margin-left: 8px;
     flex-shrink: 0;
+    perspective: 200px;
+}
+
+@keyframes flip-out {
+    from { transform: rotateX(0deg); }
+    to   { transform: rotateX(-90deg); }
+}
+
+@keyframes flip-in {
+    from { transform: rotateX(90deg); }
+    to   { transform: rotateX(0deg); }
+}
+
+.key-peg.flip-out {
+    animation: flip-out 0.15s ease-in forwards;
+}
+
+.key-peg.flip-in {
+    animation: flip-in 0.15s ease-out forwards;
+}
+
+.peg.peg-flip-in {
+    animation: flip-in 0.15s ease-out forwards;
 }
 </style>

@@ -14,8 +14,22 @@ defineEmits(['toggle-dark-mode', 'new-game']);
         <div class="menu-content">
             <div class="menu-left">
                 <RouterLink to="/">
-                    <img src="/images/logo.svg" width="22" alt="" />
-                    <h2>HEXCode</h2>
+                    <svg
+                        width="20"
+                        height="20"
+                        viewBox="0 0 20 20"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                        :style="{ stroke: darkMode ? '#fff' : '#111' }"
+                    >
+                        <path
+                            d="M13 4L7 10L13 16"
+                            stroke-width="2.5"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            fill="none"
+                        />
+                    </svg>
                 </RouterLink>
             </div>
             <div class="menu-right">
@@ -24,7 +38,19 @@ defineEmits(['toggle-dark-mode', 'new-game']);
                     title="Toggle dark mode"
                     @click="$emit('toggle-dark-mode')"
                 >
-                    <span class="dark-mode-icon">{{ darkMode ? '☀️' : '🌙' }}</span>
+                    <svg
+                        width="18"
+                        height="22"
+                        viewBox="0 0 18 22"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                        :style="{ color: darkMode ? '#fff' : '#111' }"
+                    >
+                        <!-- plate -->
+                        <rect x="1" y="1" width="16" height="20" rx="3" stroke="currentColor" stroke-width="1.5"/>
+                        <!-- rocker: up = light, down = dark -->
+                        <rect x="4" :y="darkMode ? 11 : 3" width="10" height="8" rx="2" fill="currentColor"/>
+                    </svg>
                 </button>
             </div>
         </div>
@@ -59,12 +85,8 @@ defineEmits(['toggle-dark-mode', 'new-game']);
     align-items: center;
     gap: 6px;
     text-decoration: none;
-    color: #000000aa;
 }
 
-:global(html.dark-mode) .menu-left a {
-    color: #ffffffaa;
-}
 
 .menu-center {
     flex: 1;
@@ -79,28 +101,23 @@ defineEmits(['toggle-dark-mode', 'new-game']);
 
 .menu-right {
     flex: 1;
-    text-align: right;
+    display: flex;
+    justify-content: flex-end;
 }
 
 .btn-menu {
     background: transparent;
-    color: var(--bg-primary);
     padding: 8px 14px;
     border: none;
-    font-size: 0.85em;
-    font-weight: 600;
     cursor: pointer;
-    transition: all 0.15s;
+    transition: opacity 0.15s;
     appearance: none;
+    display: flex;
+    align-items: center;
 }
 
 .btn-menu:hover {
-    opacity: 0.85;
-    transform: translateY(-1px);
-}
-
-.dark-mode-icon {
-    font-size: 1rem;
+    opacity: 0.7;
 }
 
 @media (max-width: 480px) {
