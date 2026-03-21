@@ -24,7 +24,7 @@ function yesterday(dateStr) {
     return d.toISOString().slice(0, 10);
 }
 
-export function recordResult(date, mode, won, guessCount, durationSeconds) {
+export function recordResult(date, mode, won, guessCount, durationSeconds, solution, guesses) {
     const all = loadAll();
     const stats = all[mode] ?? emptyModeStats();
 
@@ -37,7 +37,13 @@ export function recordResult(date, mode, won, guessCount, durationSeconds) {
         const key = String(guessCount);
         stats.distribution[key] = (stats.distribution[key] ?? 0) + 1;
         if (!stats.dailies) stats.dailies = [];
-        stats.dailies.push({ date, guessCount, durationSeconds: durationSeconds ?? null });
+        stats.dailies.push({
+            date,
+            guessCount,
+            durationSeconds: durationSeconds ?? null,
+            solution: solution ?? null,
+            guesses: guesses ?? null,
+        });
     } else {
         stats.streak = 0;
     }

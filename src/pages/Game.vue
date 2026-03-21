@@ -16,8 +16,10 @@ import { recordResult, loadStats, checkAndExpireStreak } from '../game/useStats.
 import { useStatsStore } from '../stores/stats.js';
 import { useStoryMode } from '../game/useStoryMode.js';
 import { STORY_LEVELS } from '../game/storyLevels.js';
+import { useShareImage } from '../composables/useShareImage.js';
 
 const { celebrate } = useHaptics();
+const { shareReview } = useShareImage();
 
 // ── Timer ──────────────────────────────────────────────────────────────────
 const elapsedSeconds = ref(0);
@@ -98,6 +100,8 @@ watch(gameOver, (val) => {
                 won.value,
                 guesses.value.length,
                 elapsedSeconds.value,
+                secretCode.value,
+                guesses.value,
             );
             currentStats.value = loadStats(currentMode.value);
             statsStore.pushStats();
@@ -229,6 +233,15 @@ function handleSeedConfirm(seed) {
 
 function handleSeedCancel() { showSeedModal.value = false; }
 
+function handleShareReview() {
+    shareReview({
+        guesses: guesses.value,
+        codeLength: gameConfig.value.CODE_LENGTH,
+        maxGuesses: gameConfig.value.MAX_GUESSES,
+        isDaily: currentSeed.value === dailySeed(),
+    });
+}
+
 function toggleDarkMode() { darkMode.value = !darkMode.value; }
 
 function handleKeydown(e) {
@@ -288,8 +301,10 @@ onUnmounted(() => {
         <TopMenu
             :dark-mode="darkMode"
             :timer="!gameOver || screen === 'review' ? formatTime(elapsedSeconds) : null"
+            :show-share="screen === 'review'"
             @toggle-dark-mode="toggleDarkMode"
             @new-game="handleNewGame"
+            @share="handleShareReview"
         />
 
         <div class="container">

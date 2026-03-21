@@ -10,7 +10,15 @@
       "Bash(npm --version)",
       "Bash(xargs wc:*)",
       "Bash(find /c/Users/keith/dev/emmet-fun/hexcode -maxdepth 2 -name .env* -o -name *.config.js -o -name *.config.ts)",
-      "Bash(xargs grep:*)"
+      "Bash(xargs grep:*)",
+      "Bash(find /c/Users/keith/dev/emmet-fun/hexcode-api/src -type f \\\\\\(-name *.ts -o -name *.js \\\\\\))",
+      "Read(//c/Users/keith/.claude/**)",
+      "mcp__linear__get_issue",
+      "mcp__linear__list_teams",
+      "mcp__linear__list_issues",
+      "Bash(node -e \":*)",
+      "mcp__linear__save_comment",
+      "mcp__linear__save_issue"
     ]
   }
 }
