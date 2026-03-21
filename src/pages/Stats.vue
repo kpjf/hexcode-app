@@ -1,13 +1,18 @@
 <script setup>
-import { computed, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useStatsStore } from '../stores/stats.js';
 import { MODES } from '../game/config.js';
+import AppButton from '../components/AppButton.vue';
 
 const router = useRouter();
 const statsStore = useStatsStore();
+const activeTab = ref('quick');
 
 onMounted(() => {
+    const darkMode = localStorage.getItem('mastermind-darkMode') !== 'false';
+    document.documentElement.classList.toggle('dark-mode', darkMode);
+
     if (statsStore.stats === null) {
         statsStore.fetchStats();
     }
@@ -21,10 +26,7 @@ function modeStats(mode) {
 
 function totalGames(mode) {
     const dist = modeStats(mode).distribution;
-
-    if (!dist) {
-        return 0;
-    }
+    if (!dist) return 0;
     return Object.values(dist).reduce((a, b) => a + b, 0);
 }
 
@@ -38,52 +40,63 @@ function maxDistCount(mode) {
         <div class="stats-card">
             <div class="stats-header">
                 <h1 class="stats-title">Statistics</h1>
-                <button class="btn-back" @click="router.push('/')">← Back</button>
+                <AppButton variant="ghost" size="sm" @click="router.push('/')">
+                    <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right: 4px;">
+                        <path d="M13 4L7 10L13 16" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+                    </svg>
+                    Back
+                </AppButton>
+            </div>
+
+            <div class="tabs">
+                <button
+                    class="tab"
+                    :class="{ active: activeTab === 'quick' }"
+                    @click="activeTab = 'quick'"
+                >Quick</button>
+                <button
+                    class="tab"
+                    :class="{ active: activeTab === 'classic' }"
+                    @click="activeTab = 'classic'"
+                >Classic</button>
             </div>
 
             <div v-if="statsStore.isLoading" class="loading">Loading stats…</div>
 
             <div v-else-if="statsStore.stats">
-                <div v-for="mode in ['classic', 'quick']" :key="mode" class="mode-section">
-                    <h2 class="mode-title">{{ mode === 'classic' ? 'Classic' : 'Quick' }}</h2>
-                    <p class="mode-subtitle">
-                        {{
-                            mode === 'classic'
-                                ? `${MODES.classic.CODE_LENGTH} colors · ${MODES.classic.MAX_GUESSES} guesses`
-                                : `${MODES.quick.CODE_LENGTH} colors · ${MODES.quick.MAX_GUESSES} guesses`
-                        }}
-                    </p>
+                <p class="mode-subtitle">
+                    {{ MODES[activeTab].CODE_LENGTH }} colors · {{ MODES[activeTab].MAX_GUESSES }} guesses
+                </p>
 
-                    <div class="summary-row">
-                        <div class="summary-stat">
-                            <span class="summary-number">{{ totalGames(mode) }}</span>
-                            <span class="summary-label">Played</span>
-                        </div>
-                        <div class="summary-stat">
-                            <span class="summary-number">{{ modeStats(mode).streak }}</span>
-                            <span class="summary-label">Streak</span>
-                        </div>
+                <div class="summary-row">
+                    <div class="summary-stat">
+                        <span class="summary-number">{{ totalGames(activeTab) }}</span>
+                        <span class="summary-label">Played</span>
                     </div>
+                    <div class="summary-stat">
+                        <span class="summary-number">{{ modeStats(activeTab).streak }}</span>
+                        <span class="summary-label">Streak</span>
+                    </div>
+                </div>
 
-                    <div class="distribution">
-                        <div class="distribution-title">Guess Distribution</div>
-                        <div v-for="n in MODES[mode].MAX_GUESSES" :key="n" class="dist-row">
-                            <span class="dist-label">{{ n }}</span>
-                            <div class="dist-bar-wrap">
-                                <div
-                                    class="dist-bar"
-                                    :style="{
-                                        width:
-                                            ((modeStats(mode).distribution[String(n)] ?? 0) /
-                                                maxDistCount(mode)) *
-                                                100 +
-                                            '%',
-                                    }"
-                                >
-                                    <span v-if="modeStats(mode).distribution[String(n)]">
-                                        {{ modeStats(mode).distribution[String(n)] }}
-                                    </span>
-                                </div>
+                <div class="distribution">
+                    <div class="distribution-title">Guess Distribution</div>
+                    <div v-for="n in MODES[activeTab].MAX_GUESSES" :key="n" class="dist-row">
+                        <span class="dist-label">{{ n }}</span>
+                        <div class="dist-bar-wrap">
+                            <div
+                                class="dist-bar"
+                                :style="{
+                                    width:
+                                        ((modeStats(activeTab).distribution[String(n)] ?? 0) /
+                                            maxDistCount(activeTab)) *
+                                            100 +
+                                        '%',
+                                }"
+                            >
+                                <span v-if="modeStats(activeTab).distribution[String(n)]">
+                                    {{ modeStats(activeTab).distribution[String(n)] }}
+                                </span>
                             </div>
                         </div>
                     </div>
@@ -128,38 +141,34 @@ function maxDistCount(mode) {
     margin: 0;
 }
 
-.btn-back {
-    background: transparent;
-    border: 1px solid var(--border-color);
-    color: var(--text-secondary);
-    padding: 6px 14px;
-    font-size: 0.85em;
-    font-weight: 600;
-    cursor: pointer;
-}
 
-.btn-back:hover {
-    color: var(--text-primary);
-    border-color: var(--text-secondary);
-}
-
-.mode-section {
-    margin-bottom: 40px;
-    padding-bottom: 40px;
+.tabs {
+    display: flex;
     border-bottom: 1px solid var(--border-color);
+    margin-bottom: 24px;
 }
 
-.mode-section:last-child {
-    border-bottom: none;
-    margin-bottom: 0;
-    padding-bottom: 0;
+.tab {
+    flex: 1;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    padding: 10px 0;
+    margin-bottom: -1px;
+    font-size: 0.9em;
+    font-weight: 600;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s;
 }
 
-.mode-title {
-    font-size: 1.25em;
-    font-weight: 700;
+.tab.active {
     color: var(--text-primary);
-    margin: 0 0 4px;
+    border-bottom-color: var(--text-primary);
+}
+
+.tab:hover:not(.active) {
+    color: var(--text-primary);
 }
 
 .mode-subtitle {
