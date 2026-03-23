@@ -2,6 +2,7 @@
 import { computed } from 'vue';
 import AppButton from './AppButton.vue';
 import { ZONE_DEFS, MODIFIER_META } from '../game/storyLevels.js';
+import { MAX_DAILY_ATTEMPTS } from '../game/useStoryMode.js';
 
 const props = defineProps({
     level: { type: Object, required: true },
@@ -11,7 +12,6 @@ const props = defineProps({
 
 const emit = defineEmits(['play', 'back']);
 
-const MAX_DAILY_ATTEMPTS = 3;
 const attemptsLeft = computed(() => MAX_DAILY_ATTEMPTS - props.attemptsUsed);
 
 const zone = computed(() => ZONE_DEFS.find((z) => z.id === props.level.zone));

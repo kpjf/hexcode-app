@@ -4,19 +4,12 @@ import { useRouter } from 'vue-router';
 import { useAuthStore } from '../stores/auth.js';
 import { useStatsStore } from '../stores/stats.js';
 import { loadDailyState } from '../game/useDailyStorage.js';
+import { dailySeed } from '../utils/date.js';
 import IntroScreen from '../components/IntroScreen.vue';
 
 const router = useRouter();
 const authStore = useAuthStore();
 const statsStore = useStatsStore();
-
-function dailySeed() {
-    const now = new Date();
-    const y = now.getFullYear();
-    const m = String(now.getMonth() + 1).padStart(2, '0');
-    const d = String(now.getDate()).padStart(2, '0');
-    return `${y}-${m}-${d}`;
-}
 
 const date = dailySeed();
 

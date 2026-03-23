@@ -1,6 +1,7 @@
 <script setup>
 import { computed, ref, onMounted } from 'vue';
-import { STORY_LEVELS, ZONE_DEFS, MODIFIER_META } from '../game/storyLevels.js';
+import { STORY_LEVELS, ZONE_DEFS } from '../game/storyLevels.js';
+import StoryLevelCard from './StoryLevelCard.vue';
 
 const props = defineProps({
     getLevelState: { type: Function, required: true },
@@ -64,32 +65,6 @@ const currentLevelId = computed(() => {
     }
     return STORY_LEVELS[STORY_LEVELS.length - 1].id;
 });
-
-// ── Per-level state helpers ─────────────────────────────────────────────────
-function levelClasses(level) {
-    const state = props.getLevelState(level.id);
-    return {
-        'node--locked':    state === 'locked',
-        'node--available': state === 'available',
-        'node--completed': state === 'completed',
-        'node--current':   level.id === currentLevelId.value,
-        'node--boss':      level.boss,
-    };
-}
-
-function starsDisplay(levelId) {
-    const n = props.getStars(levelId);
-    return '★'.repeat(n) + '☆'.repeat(3 - n);
-}
-
-// Deduplicated modifier emoji for the node badge strip
-function modifierEmojis(level) {
-    const seen = new Set();
-    return level.modifiers
-        .filter((m) => { if (seen.has(m.type)) return false; seen.add(m.type); return true; })
-        .slice(0, 3)
-        .map((m) => MODIFIER_META[m.type]?.emoji ?? '');
-}
 
 // ── Scroll to current level on mount ───────────────────────────────────────
 const hubRef = ref(null);
@@ -155,40 +130,18 @@ function handleSelect(level) {
                 </svg>
 
                 <!-- Level nodes -->
-                <button
+                <StoryLevelCard
                     v-for="(level, i) in zone.levels"
                     :key="level.id"
-                    class="level-node"
-                    :class="levelClasses(level)"
-                    :style="{ ...nodeStyle(i, level.boss), '--accent': zone.accent }"
-                    :disabled="getLevelState(level.id) === 'locked'"
-                    @click="handleSelect(level)"
-                >
-                    <!-- Node inner -->
-                    <span v-if="getLevelState(level.id) === 'completed'" class="node-check">✓</span>
-                    <span v-else-if="getLevelState(level.id) === 'locked'" class="node-lock">🔒</span>
-                    <span v-else class="node-num">{{ level.id }}</span>
-
-                    <!-- Stars (completed) -->
-                    <span v-if="getLevelState(level.id) === 'completed'" class="node-stars">
-                        {{ starsDisplay(level.id) }}
-                    </span>
-
-                    <!-- Modifier chips -->
-                    <span v-if="level.modifiers.length && getLevelState(level.id) !== 'locked'" class="mod-chips">
-                        {{ modifierEmojis(level).join('') }}
-                    </span>
-
-                    <!-- Attempts pips for available levels -->
-                    <span v-if="getLevelState(level.id) === 'available'" class="attempt-dots">
-                        <span
-                            v-for="n in 3"
-                            :key="n"
-                            class="adot"
-                            :class="{ used: n > 3 - getAttemptsToday(level.id) }"
-                        />
-                    </span>
-                </button>
+                    :level="level"
+                    :state="getLevelState(level.id)"
+                    :stars="getStars(level.id)"
+                    :attempts-today="getAttemptsToday(level.id)"
+                    :is-current="level.id === currentLevelId"
+                    :accent-color="zone.accent"
+                    :position-style="nodeStyle(i, level.boss)"
+                    @select="handleSelect(level)"
+                />
             </div>
         </div>
 
@@ -292,96 +245,4 @@ function handleSelect(level) {
     height: 100%;
 }
 
-/* ── Level node ──────────────────────────────────────────────────────────── */
-.level-node {
-    position: absolute;
-    border-radius: 50%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    border: none;
-    background: var(--accent, #555);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
-    transition: transform 0.15s, box-shadow 0.15s;
-    overflow: visible;
-    font-family: inherit;
-}
-
-.level-node:not(:disabled):hover {
-    transform: scale(1.08);
-    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.5);
-}
-
-.level-node--locked {
-    background: #2a2a2a;
-    box-shadow: none;
-    cursor: default;
-}
-
-.level-node--completed {
-    background: var(--accent, #555);
-    opacity: 0.7;
-}
-
-.level-node--current {
-    opacity: 1 !important;
-    box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.2), 0 4px 24px rgba(0, 0, 0, 0.5);
-    animation: pulse 2.5s ease-in-out infinite;
-}
-
-.level-node--boss {
-    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.15), 0 4px 20px rgba(0, 0, 0, 0.5);
-}
-
-@keyframes pulse {
-    0%, 100% { box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.2), 0 4px 24px rgba(0, 0, 0, 0.5); }
-    50%       { box-shadow: 0 0 0 8px rgba(255, 255, 255, 0.1), 0 4px 24px rgba(0, 0, 0, 0.5); }
-}
-
-.node-check, .node-lock, .node-num {
-    font-size: 1.3em;
-    font-weight: 800;
-    color: #fff;
-    line-height: 1;
-}
-
-.node-lock { font-size: 1.1em; opacity: 0.5; }
-
-.node-stars {
-    position: absolute;
-    bottom: -20px;
-    font-size: 0.65em;
-    color: #ffd700;
-    letter-spacing: 1px;
-    white-space: nowrap;
-}
-
-.mod-chips {
-    position: absolute;
-    top: -20px;
-    font-size: 0.8em;
-    white-space: nowrap;
-}
-
-.attempt-dots {
-    position: absolute;
-    bottom: -18px;
-    display: flex;
-    gap: 4px;
-}
-
-.adot {
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    background: var(--accent, #fff);
-    opacity: 0.9;
-}
-
-.adot.used {
-    background: rgba(255, 255, 255, 0.2);
-    opacity: 0.5;
-}
 </style>

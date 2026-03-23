@@ -14,31 +14,20 @@ import { useHaptics } from '../composables/useHaptics.js';
 import { saveDailyState, loadDailyState } from '../game/useDailyStorage.js';
 import { recordResult, loadStats, checkAndExpireStreak } from '../game/useStats.js';
 import { useStatsStore } from '../stores/stats.js';
+import { useAuthStore } from '../stores/auth.js';
 import { useStoryMode } from '../game/useStoryMode.js';
 import { STORY_LEVELS } from '../game/storyLevels.js';
 import { useShareImage } from '../composables/useShareImage.js';
+import { dailySeed } from '../utils/date.js';
+import { useDarkMode } from '../composables/useDarkMode.js';
+import { useGameTimer } from '../composables/useGameTimer.js';
+import { useKeyboardInput } from '../composables/useKeyboardInput.js';
 
 const { celebrate } = useHaptics();
 const { shareReview } = useShareImage();
 
 // ── Timer ──────────────────────────────────────────────────────────────────
-const elapsedSeconds = ref(0);
-let timerInterval = null;
-
-function startTimer() {
-    elapsedSeconds.value = 0;
-    timerInterval = setInterval(() => { elapsedSeconds.value++; }, 1000);
-}
-
-function stopTimer() {
-    if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
-}
-
-function formatTime(seconds) {
-    const m = Math.floor(seconds / 60);
-    const s = seconds % 60;
-    return `${m}:${s.toString().padStart(2, '0')}`;
-}
+const { elapsedSeconds, formattedTime, startTimer, stopTimer, resetTo } = useGameTimer();
 
 // ── Game core ──────────────────────────────────────────────────────────────
 const {
@@ -92,15 +81,20 @@ function handleSubmitGuess() {
 const router = useRouter();
 const route = useRoute();
 const statsStore = useStatsStore();
+const authStore = useAuthStore();
 const { completeLevel, useAttempt, awardCoins } = useStoryMode();
 
 const screen = ref('game');
 const animateBoard = ref(false);
-const darkMode = ref(localStorage.getItem('mastermind-darkMode') !== 'false');
+const { isDark: darkMode, toggleDarkMode } = useDarkMode();
 const showSeedModal = ref(false);
 const showConfetti = ref(false);
 const currentMode = ref('classic');
 const currentStats = ref(null);
+// Used when the daily was completed on another device (no local state, but server confirms)
+const syntheticResult = ref(null);
+const effectiveWon = computed(() => syntheticResult.value !== null ? syntheticResult.value.won : won.value);
+const effectiveGuessCount = computed(() => syntheticResult.value !== null ? syntheticResult.value.guessCount : guesses.value.length);
 
 // ── Story mode state ───────────────────────────────────────────────────────
 const isStoryMode = computed(() => route.query.type === 'story');
@@ -176,47 +170,64 @@ watch(
     { deep: true },
 );
 
-watch(
-    darkMode,
-    (val) => {
-        document.documentElement.classList.toggle('dark-mode', val);
-        localStorage.setItem('mastermind-darkMode', String(val));
-    },
-    { immediate: true },
-);
-
 // ── Helpers ────────────────────────────────────────────────────────────────
-function dailySeed() {
-    const now = new Date();
-    const y = now.getFullYear();
-    const m = String(now.getMonth() + 1).padStart(2, '0');
-    const d = String(now.getDate()).padStart(2, '0');
-    return `${y}-${m}-${d}`;
-}
-
 function handleConfettiDone() {
     showConfetti.value = false;
     if (screen.value === 'game') screen.value = 'outro';
 }
 
-function handlePlayDaily(mode) {
+async function handlePlayDaily(mode) {
     currentMode.value = mode;
     const date = dailySeed();
     checkAndExpireStreak(date, mode);
+
+    // Fetch server stats upfront if not already loaded — needed to detect
+    // cross-device completions regardless of local state
+    if (authStore.isAuthenticated && statsStore.stats === null) {
+        await statsStore.fetchStats();
+    }
+
     const saved = loadDailyState(date, mode);
-    if (saved) {
+    const serverStats = statsStore.stats?.[mode];
+    const completedOnServer = serverStats?.lastRecordedDate === date;
+
+    if (saved?.gameOver) {
+        // Local completed state takes priority
         restoreGame(date, mode, saved);
-        if (saved.gameOver) {
-            const stats = loadStats(mode);
-            currentStats.value = stats;
-            const statEntry = stats.dailies?.find((d) => d.date === date);
-            const duration = saved.elapsedSeconds || statEntry?.durationSeconds || 0;
-            elapsedSeconds.value = duration;
+        const stats = loadStats(mode);
+        currentStats.value = stats;
+        const statEntry = stats.dailies?.find((d) => d.date === date);
+        const duration = saved.elapsedSeconds || statEntry?.durationSeconds || 0;
+        resetTo(duration);
+        animateBoard.value = true;
+        screen.value = 'review';
+    } else if (completedOnServer) {
+        // Completed on another device — restore from server data
+        const todayEntries = serverStats.dailies?.filter(d => d.date === date) ?? [];
+        const serverEntry = todayEntries.slice().reverse().find(d => d.guesses?.length > 0)
+            ?? todayEntries[todayEntries.length - 1];
+
+        if (serverEntry?.guesses?.length > 0) {
+            restoreGame(date, mode, { guesses: serverEntry.guesses });
+            currentStats.value = loadStats(mode);
+            resetTo(serverEntry.durationSeconds ?? 0);
             animateBoard.value = true;
             screen.value = 'review';
         } else {
-            screen.value = 'game';
+            // Partial data only (no guesses saved) — show outro with what we have
+            startSeededGame(date, mode);
+            currentStats.value = loadStats(mode);
+            syntheticResult.value = {
+                won: serverStats.lastWonDate === date,
+                guessCount: serverEntry?.guessCount ?? 0,
+            };
+            resetTo(serverEntry?.durationSeconds ?? 0);
+            screen.value = 'outro';
         }
+    } else if (saved) {
+        // In-progress local game
+        restoreGame(date, mode, saved);
+        screen.value = 'game';
     } else {
         startSeededGame(date, mode);
         screen.value = 'game';
@@ -284,74 +295,38 @@ function handleShareReview() {
     });
 }
 
-function toggleDarkMode() { darkMode.value = !darkMode.value; }
-
-const COLOR_KEYS = {
-    r: 'red',
-    b: 'blue',
-    y: 'yellow',
-    g: 'green',
-    p: 'purple',
-    o: 'orange',
-    c: 'cyan',
-    k: 'pink',
-};
-
-function handleKeydown(e) {
-    if (gameOver.value) return;
-    // Ignore when typing in an input/textarea
-    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
-
-    if (e.key === 'Enter' && canSubmit.value) {
-        handleSubmitGuess();
-        return;
-    }
-
-    const color = COLOR_KEYS[e.key.toLowerCase()];
-    if (color && gameConfig.value.COLORS.includes(color)) {
-        handleAddColor(color);
-        return;
-    }
-
-    const len = gameConfig.value.CODE_LENGTH;
-    if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
-        e.preventDefault();
-        if (e.key === 'ArrowRight') {
+useKeyboardInput({
+    isActive: computed(() => !gameOver.value),
+    availableColors: computed(() => gameConfig.value.COLORS),
+    canSubmit,
+    onColorKey: handleAddColor,
+    onSubmit: handleSubmitGuess,
+    onRemove: () => { if (selectedPegIndex.value !== null) handleRemoveAt(selectedPegIndex.value); },
+    onNavigate: (dir) => {
+        const len = gameConfig.value.CODE_LENGTH;
+        if (dir === 'right') {
             selectedPegIndex.value = selectedPegIndex.value === null ? 0 : (selectedPegIndex.value + 1) % len;
         } else {
             selectedPegIndex.value = selectedPegIndex.value === null ? len - 1 : ((selectedPegIndex.value - 1) + len) % len;
         }
-        return;
-    }
-
-    if (e.key === 'Backspace' || e.key === 'Delete') {
-        if (selectedPegIndex.value !== null) {
-            handleRemoveAt(selectedPegIndex.value);
-        }
-        return;
-    }
-
-    if (e.key === 'Escape') {
-        selectedPegIndex.value = null;
-    }
-}
+    },
+    onEscape: () => { selectedPegIndex.value = null; },
+});
 
 // ── Mount ──────────────────────────────────────────────────────────────────
-onMounted(() => {
-    document.addEventListener('keydown', handleKeydown);
+onMounted(async () => {
     const { type, mode, level } = route.query;
     if (type === 'story') {
         handlePlayStory(Number(level));
     } else if (type === 'random') {
         handlePlayRandom(mode || 'classic');
     } else {
-        handlePlayDaily(mode || 'classic');
+        await handlePlayDaily(mode || 'classic');
     }
-    if (!gameOver.value) startTimer();
+    if (!gameOver.value && screen.value === 'game') startTimer();
 });
 
 onUnmounted(() => {
-    document.removeEventListener('keydown', handleKeydown);
     stopTimer();
 });
 </script>
@@ -359,8 +334,8 @@ onUnmounted(() => {
 <template>
     <OutroScreen
         v-if="screen === 'outro'"
-        :won="won"
-        :guess-count="guesses.length"
+        :won="effectiveWon"
+        :guess-count="effectiveGuessCount"
         :guesses="guesses"
         :secret-code="secretCode"
         :seed="isStoryMode ? null : currentSeed"
@@ -380,15 +355,15 @@ onUnmounted(() => {
         v-else-if="screen === 'stats'"
         :stats="currentStats"
         :max-guesses="gameConfig.MAX_GUESSES"
-        :won="won"
-        :guess-count="guesses.length"
+        :won="effectiveWon"
+        :guess-count="effectiveGuessCount"
         @close="screen = 'review'"
     />
 
     <template v-else>
         <TopMenu
             :dark-mode="darkMode"
-            :timer="!gameOver || screen === 'review' ? formatTime(elapsedSeconds) : null"
+            :timer="!gameOver || screen === 'review' ? formattedTime : null"
             :show-share="screen === 'review'"
             @toggle-dark-mode="toggleDarkMode"
             @new-game="handleNewGame"

@@ -2,15 +2,11 @@ import { ref } from 'vue';
 import { STORY_LEVELS } from './storyLevels.js';
 import { storyApi } from '../utils/auth-client.js';
 import { useAuthStore } from '../stores/auth.js';
+import { todayStr } from '../utils/date.js';
 
 const PROGRESS_KEY = 'story-progress';
 const ATTEMPTS_KEY = 'story-attempts';
-const MAX_DAILY_ATTEMPTS = 3;
-
-function todayStr() {
-    const d = new Date();
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-}
+export const MAX_DAILY_ATTEMPTS = 3;
 
 function loadProgress() {
     try {

@@ -26,6 +26,26 @@ export const useStatsStore = defineStore('stats', () => {
         return rest
     }
 
+    function toDateStr(val) {
+        if (!val) return val;
+        return typeof val === 'string' ? val.slice(0, 10) : val;
+    }
+
+    function normalizeDates(data) {
+        const result = { ...data };
+        for (const mode of ['classic', 'quick']) {
+            if (!result[mode]) continue;
+            const m = { ...result[mode] };
+            m.lastWonDate = toDateStr(m.lastWonDate);
+            m.lastRecordedDate = toDateStr(m.lastRecordedDate);
+            if (Array.isArray(m.dailies)) {
+                m.dailies = m.dailies.map(d => ({ ...d, date: toDateStr(d.date) }));
+            }
+            result[mode] = m;
+        }
+        return result;
+    }
+
     async function fetchStats() {
         isLoading.value = true
         error.value = null
@@ -43,7 +63,7 @@ export const useStatsStore = defineStore('stats', () => {
                 }
             } else {
                 // Server is source of truth — use it as-is, no local merge
-                const clean = stripMeta(data)
+                const clean = normalizeDates(stripMeta(data))
                 saveLocalStats(clean)
                 stats.value = clean
             }

@@ -4,15 +4,14 @@ import { useRouter } from 'vue-router';
 import { useStatsStore } from '../stores/stats.js';
 import { MODES } from '../game/config.js';
 import AppButton from '../components/AppButton.vue';
+import { useDarkMode } from '../composables/useDarkMode.js';
 
 const router = useRouter();
 const statsStore = useStatsStore();
 const activeTab = ref('quick');
+useDarkMode();
 
 onMounted(() => {
-    const darkMode = localStorage.getItem('mastermind-darkMode') !== 'false';
-    document.documentElement.classList.toggle('dark-mode', darkMode);
-
     if (statsStore.stats === null) {
         statsStore.fetchStats();
     }
