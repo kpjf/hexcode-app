@@ -130,7 +130,7 @@ watch(gameOver, (val) => {
         if (!won.value && screen.value === 'game') screen.value = 'outro';
     } else {
         if (currentSeed.value === dailySeed()) {
-            recordResult(
+            const isNewResult = recordResult(
                 currentSeed.value,
                 currentMode.value,
                 won.value,
@@ -142,8 +142,8 @@ watch(gameOver, (val) => {
             currentStats.value = loadStats(currentMode.value);
             statsStore.pushStats();
 
-            // Award coins for daily wins
-            if (won.value) {
+            // Award coins for daily wins — only on first completion
+            if (won.value && isNewResult) {
                 const coinAmount = currentMode.value === 'classic' ? 10 : 5;
                 awardCoins(coinAmount);
             }

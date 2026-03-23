@@ -29,7 +29,7 @@ export function recordResult(date, mode, won, guessCount, durationSeconds, solut
     const stats = all[mode] ?? emptyModeStats();
 
     // Idempotent — skip if already recorded for this date
-    if (stats.lastRecordedDate === date) return;
+    if (stats.lastRecordedDate === date) return false;
 
     if (won) {
         stats.streak = stats.lastWonDate === yesterday(date) ? stats.streak + 1 : 1;
@@ -51,6 +51,7 @@ export function recordResult(date, mode, won, guessCount, durationSeconds, solut
     stats.lastRecordedDate = date;
     all[mode] = stats;
     localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
+    return true;
 }
 
 export function loadStats(mode) {
