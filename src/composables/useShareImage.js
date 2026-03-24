@@ -33,7 +33,7 @@ function buildShareText({ guesses, codeLength, maxGuesses, isDaily, showGuesses 
     return `${header}\n${score}\n\n${grid}`;
 }
 
-function buildShareCanvas({ guesses, codeLength, maxGuesses, isDaily, showGuesses }) {
+async function buildShareCanvas({ guesses, codeLength, maxGuesses, isDaily, showGuesses, elapsedSeconds }) {
     const DPR = 2;
 
     // Guess square size
@@ -57,10 +57,14 @@ function buildShareCanvas({ guesses, codeLength, maxGuesses, isDaily, showGuesse
     const W = Math.max(240, rowContentW + PADDING_X * 2);
     const rowX = (W - rowContentW) / 2;
 
-    const HEADER_H = 86;
+    const LOGO_SIZE = 40;
+    const headerAdvance = LOGO_SIZE + 8   // logo + gap
+        + 19                               // date line
+        + 24                               // score line
+        + (elapsedSeconds != null ? 22 : 0); // time line
+
     const gridH = guesses.length * (ROW_H + ROW_GAP) - ROW_GAP;
-    const FOOTER_H = 32;
-    const H = PADDING_Y + HEADER_H + 20 + gridH + 20 + FOOTER_H + PADDING_Y;
+    const H = PADDING_Y + headerAdvance + 20 + gridH + PADDING_Y;
 
     const canvas = document.createElement('canvas');
     canvas.width = W * DPR;
@@ -75,12 +79,23 @@ function buildShareCanvas({ guesses, codeLength, maxGuesses, isDaily, showGuesse
 
     let y = PADDING_Y;
 
-    // Title
-    ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 24px monospace, monospace';
-    ctx.textAlign = 'center';
-    ctx.fillText('HEXCode', W / 2, y + 24);
-    y += 36;
+    // Logo
+    try {
+        const logoImg = await new Promise((resolve, reject) => {
+            const img = new Image();
+            img.onload = () => resolve(img);
+            img.onerror = reject;
+            img.src = '/images/logo.svg';
+        });
+        ctx.drawImage(logoImg, (W - LOGO_SIZE) / 2, y, LOGO_SIZE, LOGO_SIZE);
+    } catch {
+        // Fallback to text if logo fails to load
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 24px monospace, monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText('HEXCode', W / 2, y + 24);
+    }
+    y += LOGO_SIZE + 8;
 
     // Date or "Random Game"
     const today = new Date().toLocaleDateString('en-US', {
@@ -88,14 +103,26 @@ function buildShareCanvas({ guesses, codeLength, maxGuesses, isDaily, showGuesse
     });
     ctx.fillStyle = '#888888';
     ctx.font = '13px sans-serif';
-    ctx.fillText(isDaily ? today : 'Random Game', W / 2, y + 14);
-    y += 26;
+    ctx.textAlign = 'center';
+    ctx.fillText(isDaily ? today : 'Random Game', W / 2, y + 13);
+    y += 19;
 
     // Score
     ctx.fillStyle = '#ffffff';
     ctx.font = 'bold 20px monospace, monospace';
     ctx.fillText(`${guesses.length} / ${maxGuesses}`, W / 2, y + 20);
     y += 24;
+
+    // Time
+    if (elapsedSeconds != null) {
+        y += 4;
+        const mins = Math.floor(elapsedSeconds / 60);
+        const secs = String(elapsedSeconds % 60).padStart(2, '0');
+        ctx.fillStyle = '#888888';
+        ctx.font = '13px monospace, monospace';
+        ctx.fillText(`${mins}:${secs}`, W / 2, y + 13);
+        y += 18;
+    }
 
     y += 20;
 
@@ -127,33 +154,21 @@ function buildShareCanvas({ guesses, codeLength, maxGuesses, isDaily, showGuesse
                 ctx.fillRect(x + col * (MINI + MINI_GAP), y + row * (MINI + MINI_GAP), MINI, MINI);
             });
         } else {
-            // Horizontal peg row
+            // Horizontal square row
             dots.forEach((type, i) => {
-                const cx = x + i * (SQ + SQ_GAP) + SQ / 2;
-                const cy = y + SQ / 2;
-                ctx.beginPath();
-                ctx.arc(cx, cy, SQ / 2, 0, Math.PI * 2);
                 ctx.fillStyle = type === 'hit' ? '#22c55e' : type === 'close' ? '#eab308' : '#3a3a3a';
-                ctx.fill();
+                ctx.fillRect(x + i * (SQ + SQ_GAP), y, SQ, SQ);
             });
         }
 
         y += ROW_H + ROW_GAP;
     }
 
-    y += 12;
-
-    // Footer
-    ctx.fillStyle = '#444444';
-    ctx.font = '12px monospace, monospace';
-    ctx.textAlign = 'center';
-    ctx.fillText('hexcode', W / 2, y + 14);
-
     return canvas;
 }
 
-async function doShare({ guesses, codeLength, maxGuesses, isDaily, showGuesses, onCopied }) {
-    const canvas = buildShareCanvas({ guesses, codeLength, maxGuesses, isDaily, showGuesses });
+async function doShare({ guesses, codeLength, maxGuesses, isDaily, showGuesses, elapsedSeconds, onCopied }) {
+    const canvas = await buildShareCanvas({ guesses, codeLength, maxGuesses, isDaily, showGuesses, elapsedSeconds });
     const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
     const file = new File([blob], 'hexcode.png', { type: 'image/png' });
 

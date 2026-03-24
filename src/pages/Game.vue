@@ -9,6 +9,7 @@ import ConfettiCanvas from '../components/ConfettiCanvas.vue';
 import OutroScreen from '../components/OutroScreen.vue';
 import StatsScreen from '../components/StatsScreen.vue';
 import AppButton from '../components/AppButton.vue';
+import ShareModal from '../components/ShareModal.vue';
 import { useGame } from '../game/useGame.js';
 import { useHaptics } from '../composables/useHaptics.js';
 import { saveDailyState, loadDailyState } from '../game/useDailyStorage.js';
@@ -24,7 +25,7 @@ import { useGameTimer } from '../composables/useGameTimer.js';
 import { useKeyboardInput } from '../composables/useKeyboardInput.js';
 
 const { celebrate } = useHaptics();
-const { shareReview } = useShareImage();
+const { shareResults, shareReview } = useShareImage();
 
 // ── Timer ──────────────────────────────────────────────────────────────────
 const { elapsedSeconds, formattedTime, startTimer, stopTimer, resetTo } = useGameTimer();
@@ -88,6 +89,7 @@ const screen = ref('game');
 const animateBoard = ref(false);
 const { isDark: darkMode, toggleDarkMode } = useDarkMode();
 const showSeedModal = ref(false);
+const showShareModal = ref(false);
 const showConfetti = ref(false);
 const currentMode = ref('classic');
 const currentStats = ref(null);
@@ -286,13 +288,24 @@ function handleSeedConfirm(seed) {
 
 function handleSeedCancel() { showSeedModal.value = false; }
 
-function handleShareReview() {
-    shareReview({
+function shareOpts() {
+    return {
         guesses: guesses.value,
         codeLength: gameConfig.value.CODE_LENGTH,
         maxGuesses: gameConfig.value.MAX_GUESSES,
         isDaily: currentSeed.value === dailySeed(),
-    });
+        elapsedSeconds: elapsedSeconds.value,
+    };
+}
+
+function handleSharePattern() {
+    showShareModal.value = false;
+    shareResults(shareOpts());
+}
+
+function handleShareFull() {
+    showShareModal.value = false;
+    shareReview(shareOpts());
 }
 
 useKeyboardInput({
@@ -367,7 +380,7 @@ onUnmounted(() => {
             :show-share="screen === 'review'"
             @toggle-dark-mode="toggleDarkMode"
             @new-game="handleNewGame"
-            @share="handleShareReview"
+            @share="showShareModal = true"
         />
 
         <div class="container">
@@ -417,6 +430,13 @@ onUnmounted(() => {
             :initial-seed="currentSeed || ''"
             @confirm="handleSeedConfirm"
             @cancel="handleSeedCancel"
+        />
+
+        <ShareModal
+            :visible="showShareModal"
+            @share-pattern="handleSharePattern"
+            @share-full="handleShareFull"
+            @close="showShareModal = false"
         />
     </template>
 
