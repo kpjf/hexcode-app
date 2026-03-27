@@ -1,6 +1,9 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import { useAuthStore } from './stores/auth.js';
 
+// Auth routes render nothing — AuthDialog in App.vue handles the UI
+const EmptyView = { render: () => null };
+
 const routes = [
     {
         path: '/',
@@ -12,13 +15,22 @@ const routes = [
     },
     {
         path: '/login',
-        component: () => import('./pages/Login.vue'),
+        component: EmptyView,
         meta: { requiresGuest: true },
     },
     {
         path: '/signup',
-        component: () => import('./pages/Signup.vue'),
+        component: EmptyView,
         meta: { requiresGuest: true },
+    },
+    {
+        path: '/forgot-password',
+        component: EmptyView,
+        meta: { requiresGuest: true },
+    },
+    {
+        path: '/reset-password',
+        component: EmptyView,
     },
     {
         path: '/stats',
@@ -32,10 +44,6 @@ const routes = [
     {
         path: '/verify-email',
         component: () => import('./pages/VerifyEmail.vue'),
-    },
-    {
-        path: '/reset-password',
-        component: () => import('./pages/ResetPassword.vue'),
     },
 ];
 

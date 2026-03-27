@@ -133,7 +133,7 @@ watch(gameOver, (val) => {
         }
         if (!won.value && screen.value === 'game') screen.value = 'outro';
     } else {
-        if (currentSeed.value === dailySeed()) {
+        if (currentSeed.value?.startsWith(dailySeed() + '-')) {
             const isNewResult = recordResult(
                 currentSeed.value,
                 currentMode.value,
@@ -162,7 +162,7 @@ watch(gameOver, (val) => {
 watch(
     guesses,
     () => {
-        if (!isStoryMode.value && currentSeed.value === dailySeed() && !screen.value.startsWith('review')) {
+        if (!isStoryMode.value && currentSeed.value?.startsWith(dailySeed() + '-') && !screen.value.startsWith('review')) {
             saveDailyState(dailySeed(), currentMode.value, {
                 guesses: guesses.value,
                 gameOver: gameOver.value,
@@ -219,7 +219,7 @@ async function handlePlayDaily(mode) {
             screen.value = 'review';
         } else {
             // Partial data only (no guesses saved) — show outro with what we have
-            startSeededGame(date, mode);
+            startSeededGame(date + '-' + mode, mode);
             currentStats.value = loadStats(mode);
             syntheticResult.value = {
                 won: serverStats.lastWonDate === date,
@@ -233,7 +233,7 @@ async function handlePlayDaily(mode) {
         restoreGame(date, mode, saved);
         screen.value = 'game';
     } else {
-        startSeededGame(date, mode);
+        startSeededGame(date + '-' + mode, mode);
         screen.value = 'game';
     }
 }
@@ -295,7 +295,7 @@ function shareOpts() {
         guesses: guesses.value,
         codeLength: gameConfig.value.CODE_LENGTH,
         maxGuesses: gameConfig.value.MAX_GUESSES,
-        isDaily: currentSeed.value === dailySeed(),
+        isDaily: currentSeed.value?.startsWith(dailySeed() + '-'),
         elapsedSeconds: elapsedSeconds.value,
     };
 }
