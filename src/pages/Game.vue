@@ -197,7 +197,7 @@ async function handlePlayDaily(mode) {
 
     if (saved?.gameOver) {
         // Local completed state takes priority
-        restoreGame(date, mode, saved);
+        restoreGame(date + '-' + mode, mode, saved);
         const stats = loadStats(mode);
         currentStats.value = stats;
         const statEntry = stats.dailies?.find((d) => d.date === date);
@@ -212,7 +212,7 @@ async function handlePlayDaily(mode) {
             ?? todayEntries[todayEntries.length - 1];
 
         if (serverEntry?.guesses?.length > 0) {
-            restoreGame(date, mode, { guesses: serverEntry.guesses });
+            restoreGame(date + '-' + mode, mode, { guesses: serverEntry.guesses });
             currentStats.value = loadStats(mode);
             resetTo(serverEntry.durationSeconds ?? 0);
             animateBoard.value = true;
@@ -230,7 +230,7 @@ async function handlePlayDaily(mode) {
         }
     } else if (saved) {
         // In-progress local game
-        restoreGame(date, mode, saved);
+        restoreGame(date + '-' + mode, mode, saved);
         screen.value = 'game';
     } else {
         startSeededGame(date + '-' + mode, mode);
