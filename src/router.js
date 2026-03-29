@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import { useAuthStore } from './stores/auth.js';
 
-import { usePostHog } from '@/composables/usePostHog';
+import { usePostHog } from './composables/usePostHog.js';
 
 // Auth routes render nothing — AuthDialog in App.vue handles the UI
 const EmptyView = { render: () => null };
