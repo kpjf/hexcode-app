@@ -27,13 +27,25 @@ const loginLocalError = ref('');
 
 const loginEmailValid = computed(() => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(loginEmail.value));
 const loginPwdValid = computed(() => loginPassword.value.length >= 6);
-const loginCanSubmit = computed(() => loginEmailValid.value && loginPwdValid.value && !isLoading.value);
+const loginCanSubmit = computed(
+    () => loginEmailValid.value && loginPwdValid.value && !isLoading.value,
+);
 
 async function handleLogin() {
     loginLocalError.value = '';
-    if (!loginEmailValid.value) { loginLocalError.value = 'Please enter a valid email address.'; return; }
-    if (!loginPwdValid.value) { loginLocalError.value = 'Password must be at least 6 characters.'; return; }
-    try { await login(loginEmail.value, loginPassword.value); } catch { /* authError handles it */ }
+    if (!loginEmailValid.value) {
+        loginLocalError.value = 'Please enter a valid email address.';
+        return;
+    }
+    if (!loginPwdValid.value) {
+        loginLocalError.value = 'Password must be at least 6 characters.';
+        return;
+    }
+    try {
+        await login(loginEmail.value, loginPassword.value);
+    } catch {
+        /* authError handles it */
+    }
 }
 
 // ── Signup ────────────────────────────────────────────────────────────────
@@ -46,14 +58,34 @@ const signupLocalError = ref('');
 const signupNameValid = computed(() => signupName.value.trim().length >= 2);
 const signupEmailValid = computed(() => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(signupEmail.value));
 const signupPwdValid = computed(() => signupPassword.value.length >= 6);
-const signupCanSubmit = computed(() => signupNameValid.value && signupEmailValid.value && signupPwdValid.value && !isLoading.value);
+const signupCanSubmit = computed(
+    () =>
+        signupNameValid.value && signupEmailValid.value && signupPwdValid.value && !isLoading.value,
+);
 
 async function handleSignup() {
     signupLocalError.value = '';
-    if (!signupNameValid.value) { signupLocalError.value = 'Name must be at least 2 characters.'; return; }
-    if (!signupEmailValid.value) { signupLocalError.value = 'Please enter a valid email address.'; return; }
-    if (!signupPwdValid.value) { signupLocalError.value = 'Password must be at least 6 characters.'; return; }
-    try { await register({ name: signupName.value.trim(), email: signupEmail.value, password: signupPassword.value }); } catch { /* authError handles it */ }
+    if (!signupNameValid.value) {
+        signupLocalError.value = 'Name must be at least 2 characters.';
+        return;
+    }
+    if (!signupEmailValid.value) {
+        signupLocalError.value = 'Please enter a valid email address.';
+        return;
+    }
+    if (!signupPwdValid.value) {
+        signupLocalError.value = 'Password must be at least 6 characters.';
+        return;
+    }
+    try {
+        await register({
+            name: signupName.value.trim(),
+            email: signupEmail.value,
+            password: signupPassword.value,
+        });
+    } catch {
+        /* authError handles it */
+    }
 }
 
 // ── Forgot password ───────────────────────────────────────────────────────
@@ -67,7 +99,10 @@ const forgotCanSubmit = computed(() => forgotEmailValid.value && !forgotIsLoadin
 
 async function handleForgot() {
     forgotError.value = '';
-    if (!forgotEmailValid.value) { forgotError.value = 'Please enter a valid email address.'; return; }
+    if (!forgotEmailValid.value) {
+        forgotError.value = 'Please enter a valid email address.';
+        return;
+    }
     forgotIsLoading.value = true;
     try {
         await authApi.forgotPassword(forgotEmail.value);
@@ -90,13 +125,24 @@ const resetSuccess = ref(false);
 
 const resetPwdValid = computed(() => resetPassword.value.length >= 6);
 const resetPwdsMatch = computed(() => resetPassword.value === resetConfirm.value);
-const resetCanSubmit = computed(() => resetPwdValid.value && resetPwdsMatch.value && !resetIsLoading.value);
+const resetCanSubmit = computed(
+    () => resetPwdValid.value && resetPwdsMatch.value && !resetIsLoading.value,
+);
 
 async function handleReset() {
     resetError.value = '';
-    if (!resetToken.value) { resetError.value = 'No reset token provided.'; return; }
-    if (!resetPwdValid.value) { resetError.value = 'Password must be at least 6 characters.'; return; }
-    if (!resetPwdsMatch.value) { resetError.value = 'Passwords do not match.'; return; }
+    if (!resetToken.value) {
+        resetError.value = 'No reset token provided.';
+        return;
+    }
+    if (!resetPwdValid.value) {
+        resetError.value = 'Password must be at least 6 characters.';
+        return;
+    }
+    if (!resetPwdsMatch.value) {
+        resetError.value = 'Passwords do not match.';
+        return;
+    }
     resetIsLoading.value = true;
     try {
         await authApi.resetPassword(resetToken.value, resetPassword.value);
@@ -138,7 +184,12 @@ function handleCancel(e) {
     <dialog ref="el" @cancel="handleCancel" @click.self="handleClose">
         <button class="close-btn" aria-label="Close" @click="handleClose">
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                <path d="M1 1L13 13M13 1L1 13" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                <path
+                    d="M1 1L13 13M13 1L1 13"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                />
             </svg>
         </button>
 
@@ -153,17 +204,31 @@ function handleCancel(e) {
             <form @submit.prevent="handleLogin" novalidate>
                 <div class="field">
                     <label for="login-email">Email</label>
-                    <input id="login-email" v-model="loginEmail" type="email" autocomplete="email"
-                        placeholder="you@example.com" :disabled="isLoading" />
+                    <input
+                        id="login-email"
+                        v-model="loginEmail"
+                        type="email"
+                        autocomplete="email"
+                        placeholder="you@example.com"
+                        :disabled="isLoading"
+                    />
                 </div>
                 <div class="field">
                     <label for="login-password">Password</label>
                     <div class="password-wrapper">
-                        <input id="login-password" v-model="loginPassword"
-                            :type="loginShowPwd ? 'text' : 'password'" autocomplete="current-password"
-                            placeholder="••••••••" :disabled="isLoading" />
-                        <button type="button" class="toggle-pwd" @click="loginShowPwd = !loginShowPwd"
-                            :aria-label="loginShowPwd ? 'Hide password' : 'Show password'">
+                        <input
+                            id="login-password"
+                            v-model="loginPassword"
+                            :type="loginShowPwd ? 'text' : 'password'"
+                            autocomplete="current-password"
+                            :disabled="isLoading"
+                        />
+                        <button
+                            type="button"
+                            class="toggle-pwd"
+                            @click="loginShowPwd = !loginShowPwd"
+                            :aria-label="loginShowPwd ? 'Hide password' : 'Show password'"
+                        >
                             {{ loginShowPwd ? 'Hide' : 'Show' }}
                         </button>
                     </div>
@@ -171,12 +236,21 @@ function handleCancel(e) {
                 <p class="forgot-link">
                     <RouterLink to="/forgot-password">Forgot password?</RouterLink>
                 </p>
-                <p v-if="loginLocalError || authError" class="error-msg">{{ loginLocalError || authError }}</p>
-                <AppButton type="submit" :full="true" :disabled="!loginCanSubmit" class="submit-btn">
+                <p v-if="loginLocalError || authError" class="error-msg">
+                    {{ loginLocalError || authError }}
+                </p>
+                <AppButton
+                    type="submit"
+                    :full="true"
+                    :disabled="!loginCanSubmit"
+                    class="submit-btn"
+                >
                     <span v-if="isLoading">Signing in…</span>
                     <span v-else>Sign in</span>
                 </AppButton>
-                <p class="switch-link">Don't have an account? <RouterLink to="/signup">Sign up</RouterLink></p>
+                <p class="switch-link">
+                    Don't have an account? <RouterLink to="/signup">Sign up</RouterLink>
+                </p>
             </form>
         </template>
 
@@ -186,32 +260,62 @@ function handleCancel(e) {
             <form @submit.prevent="handleSignup" novalidate>
                 <div class="field">
                     <label for="signup-name">Name</label>
-                    <input id="signup-name" v-model="signupName" type="text" autocomplete="name"
-                        placeholder="Your name" :disabled="isLoading" />
+                    <input
+                        id="signup-name"
+                        v-model="signupName"
+                        type="text"
+                        autocomplete="name"
+                        placeholder="Your name"
+                        :disabled="isLoading"
+                    />
                 </div>
                 <div class="field">
                     <label for="signup-email">Email</label>
-                    <input id="signup-email" v-model="signupEmail" type="email" autocomplete="email"
-                        placeholder="you@example.com" :disabled="isLoading" />
+                    <input
+                        id="signup-email"
+                        v-model="signupEmail"
+                        type="email"
+                        autocomplete="email"
+                        placeholder="you@example.com"
+                        :disabled="isLoading"
+                    />
                 </div>
                 <div class="field">
                     <label for="signup-password">Password</label>
                     <div class="password-wrapper">
-                        <input id="signup-password" v-model="signupPassword"
-                            :type="signupShowPwd ? 'text' : 'password'" autocomplete="new-password"
-                            placeholder="••••••••" :disabled="isLoading" />
-                        <button type="button" class="toggle-pwd" @click="signupShowPwd = !signupShowPwd"
-                            :aria-label="signupShowPwd ? 'Hide password' : 'Show password'">
+                        <input
+                            id="signup-password"
+                            v-model="signupPassword"
+                            :type="signupShowPwd ? 'text' : 'password'"
+                            autocomplete="new-password"
+                            placeholder="••••••••"
+                            :disabled="isLoading"
+                        />
+                        <button
+                            type="button"
+                            class="toggle-pwd"
+                            @click="signupShowPwd = !signupShowPwd"
+                            :aria-label="signupShowPwd ? 'Hide password' : 'Show password'"
+                        >
                             {{ signupShowPwd ? 'Hide' : 'Show' }}
                         </button>
                     </div>
                 </div>
-                <p v-if="signupLocalError || authError" class="error-msg">{{ signupLocalError || authError }}</p>
-                <AppButton type="submit" :full="true" :disabled="!signupCanSubmit" class="submit-btn">
+                <p v-if="signupLocalError || authError" class="error-msg">
+                    {{ signupLocalError || authError }}
+                </p>
+                <AppButton
+                    type="submit"
+                    :full="true"
+                    :disabled="!signupCanSubmit"
+                    class="submit-btn"
+                >
                     <span v-if="isLoading">Creating account…</span>
                     <span v-else>Sign up</span>
                 </AppButton>
-                <p class="switch-link">Already have an account? <RouterLink to="/login">Sign in</RouterLink></p>
+                <p class="switch-link">
+                    Already have an account? <RouterLink to="/login">Sign in</RouterLink>
+                </p>
             </form>
         </template>
 
@@ -219,19 +323,35 @@ function handleCancel(e) {
         <template v-else-if="panel === 'forgot'">
             <div v-if="forgotSuccess" class="success-state">
                 <h3>Check your email</h3>
-                <p class="subtitle">If an account exists for <strong>{{ forgotEmail }}</strong>, we sent a reset link.</p>
-                <AppButton :full="true" @click="router.replace('/login')">Back to sign in</AppButton>
+                <p class="subtitle">
+                    If an account exists for <strong>{{ forgotEmail }}</strong
+                    >, we sent a reset link.
+                </p>
+                <AppButton :full="true" @click="router.replace('/login')"
+                    >Back to sign in</AppButton
+                >
             </div>
             <template v-else>
                 <h3>Forgot password</h3>
                 <form @submit.prevent="handleForgot" novalidate>
                     <div class="field">
                         <label for="forgot-email">Email</label>
-                        <input id="forgot-email" v-model="forgotEmail" type="email" autocomplete="email"
-                            placeholder="you@example.com" :disabled="forgotIsLoading" />
+                        <input
+                            id="forgot-email"
+                            v-model="forgotEmail"
+                            type="email"
+                            autocomplete="email"
+                            placeholder="you@example.com"
+                            :disabled="forgotIsLoading"
+                        />
                     </div>
                     <p v-if="forgotError" class="error-msg">{{ forgotError }}</p>
-                    <AppButton type="submit" :full="true" :disabled="!forgotCanSubmit" class="submit-btn">
+                    <AppButton
+                        type="submit"
+                        :full="true"
+                        :disabled="!forgotCanSubmit"
+                        class="submit-btn"
+                    >
                         <span v-if="forgotIsLoading">Sending…</span>
                         <span v-else>Send reset link</span>
                     </AppButton>
@@ -253,23 +373,42 @@ function handleCancel(e) {
                     <div class="field">
                         <label for="reset-password">New password</label>
                         <div class="password-wrapper">
-                            <input id="reset-password" v-model="resetPassword"
-                                :type="resetShowPwd ? 'text' : 'password'" autocomplete="new-password"
-                                placeholder="••••••••" :disabled="resetIsLoading" />
-                            <button type="button" class="toggle-pwd" @click="resetShowPwd = !resetShowPwd"
-                                :aria-label="resetShowPwd ? 'Hide password' : 'Show password'">
+                            <input
+                                id="reset-password"
+                                v-model="resetPassword"
+                                :type="resetShowPwd ? 'text' : 'password'"
+                                autocomplete="new-password"
+                                placeholder="••••••••"
+                                :disabled="resetIsLoading"
+                            />
+                            <button
+                                type="button"
+                                class="toggle-pwd"
+                                @click="resetShowPwd = !resetShowPwd"
+                                :aria-label="resetShowPwd ? 'Hide password' : 'Show password'"
+                            >
                                 {{ resetShowPwd ? 'Hide' : 'Show' }}
                             </button>
                         </div>
                     </div>
                     <div class="field">
                         <label for="reset-confirm">Confirm new password</label>
-                        <input id="reset-confirm" v-model="resetConfirm"
-                            :type="resetShowPwd ? 'text' : 'password'" autocomplete="new-password"
-                            placeholder="••••••••" :disabled="resetIsLoading" />
+                        <input
+                            id="reset-confirm"
+                            v-model="resetConfirm"
+                            :type="resetShowPwd ? 'text' : 'password'"
+                            autocomplete="new-password"
+                            placeholder="••••••••"
+                            :disabled="resetIsLoading"
+                        />
                     </div>
                     <p v-if="resetError" class="error-msg">{{ resetError }}</p>
-                    <AppButton type="submit" :full="true" :disabled="!resetCanSubmit" class="submit-btn">
+                    <AppButton
+                        type="submit"
+                        :full="true"
+                        :disabled="!resetCanSubmit"
+                        class="submit-btn"
+                    >
                         <span v-if="resetIsLoading">Resetting…</span>
                         <span v-else>Reset password</span>
                     </AppButton>
@@ -359,7 +498,7 @@ input {
     padding: 0.6rem 0.75rem;
     border: 1px solid var(--border-color);
     border-radius: 6px;
-    background: var(--bg-primary);
+    background: var(--bg-modal);
     color: var(--text-primary);
     font-size: 1rem;
     outline: none;
