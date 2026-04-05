@@ -19,6 +19,11 @@ export function useGame() {
         !currentGuess.value.includes(null) &&
         !gameOver.value
     );
+    const isDuplicateCurrentGuess = computed(() => {
+        const current = currentGuess.value;
+        if (current.length !== gameConfig.value.CODE_LENGTH || current.includes(null)) return false;
+        return guesses.value.some(g => g.code.every((c, i) => c === current[i]));
+    });
 
     function syncState() {
         guesses.value = [...game.getGuesses()];
@@ -100,6 +105,7 @@ export function useGame() {
         secretCode,
         remainingGuesses,
         canSubmit,
+        isDuplicateCurrentGuess,
         startRandomGame,
         startSeededGame,
         startStoryLevel,

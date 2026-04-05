@@ -11,6 +11,7 @@ import StatsScreen from '../components/StatsScreen.vue';
 import AppButton from '../components/AppButton.vue';
 import ShareModal from '../components/ShareModal.vue';
 import HowToPlayModal from '../components/HowToPlayModal.vue';
+import DuplicateGuessModal from '../components/DuplicateGuessModal.vue';
 import { useGame } from '../game/useGame.js';
 import { useHaptics } from '../composables/useHaptics.js';
 import { saveDailyState, loadDailyState } from '../game/useDailyStorage.js';
@@ -34,7 +35,7 @@ const { elapsedSeconds, formattedTime, startTimer, stopTimer, resetTo } = useGam
 // ── Game core ──────────────────────────────────────────────────────────────
 const {
     currentSeed, gameConfig, guesses, currentGuess, gameOver, won, secretCode,
-    canSubmit, startRandomGame, startSeededGame, startStoryLevel, restoreGame,
+    canSubmit, isDuplicateCurrentGuess, startRandomGame, startSeededGame, startStoryLevel, restoreGame,
     addColor, removeColorAt, setColorAt, clearGuess, submitGuess,
 } = useGame();
 
@@ -76,6 +77,10 @@ function handleClearGuess() {
 }
 
 function handleSubmitGuess() {
+    if (isDuplicateCurrentGuess.value) {
+        showDuplicateGuess.value = true;
+        return;
+    }
     submitGuess();
     selectedPegIndex.value = null;
 }
@@ -92,6 +97,7 @@ const { theme, isDark: darkMode, toggleDarkMode } = useDarkMode();
 const showSeedModal = ref(false);
 const showShareModal = ref(false);
 const showHowToPlay = ref(false);
+const showDuplicateGuess = ref(false);
 const showConfetti = ref(false);
 const currentMode = ref('classic');
 const currentStats = ref(null);
@@ -451,6 +457,11 @@ onUnmounted(() => {
         <HowToPlayModal
             :visible="showHowToPlay"
             @close="showHowToPlay = false"
+        />
+
+        <DuplicateGuessModal
+            :visible="showDuplicateGuess"
+            @close="showDuplicateGuess = false"
         />
     </template>
 
