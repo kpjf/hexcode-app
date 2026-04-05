@@ -18,6 +18,7 @@ const emit = defineEmits([
     'play-daily',
     'play-random',
     'story',
+    'battle',
     'login',
     'signup',
     'logout',
@@ -65,6 +66,9 @@ const emit = defineEmits([
                     </AppButton>
                     <AppButton variant="ghost" size="lg" on-dark @click="emit('story')">
                         📖 Story Mode
+                    </AppButton>
+                    <AppButton variant="ghost" size="lg" on-dark @click="emit('battle')">
+                        ⚔️ Battle Mode
                     </AppButton>
                 </div>
 
