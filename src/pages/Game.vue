@@ -24,6 +24,10 @@ import { dailySeed } from '../utils/date.js';
 import { useDarkMode } from '../composables/useDarkMode.js';
 import { useGameTimer } from '../composables/useGameTimer.js';
 import { useKeyboardInput } from '../composables/useKeyboardInput.js';
+import { useBattleStore } from '../stores/battle.js';
+import { useBattleSocket } from '../composables/useBattleSocket.js';
+import BattleLeaderboard from '../components/BattleLeaderboard.vue';
+import BattleCountdown from '../components/BattleCountdown.vue';
 
 const { celebrate } = useHaptics();
 const { shareResults, shareReview } = useShareImage();
@@ -86,6 +90,38 @@ const statsStore = useStatsStore();
 const authStore = useAuthStore();
 const { completeLevel, useAttempt, awardCoins } = useStoryMode();
 
+// ── Battle mode ────────────────────────────────────────────────────────────
+const isBattleMode = computed(() => route.query.type === 'battle');
+const battleStore = useBattleStore();
+const battleSocket = useBattleSocket();
+const stillPlayingCount = computed(() =>
+    battleStore.players.filter((p) => p.status === 'playing').length,
+);
+
+// When go-again fires, server emits game:go with a new seed — restart in place
+watch(
+    () => battleStore.battleSeed,
+    (newSeed, oldSeed) => {
+        if (isBattleMode.value && newSeed && newSeed !== oldSeed) {
+            startSeededGame(newSeed, 'classic');
+            screen.value = 'game';
+            showConfetti.value = false;
+            resetTo(0);
+            startTimer(0);
+        }
+    },
+);
+
+function handleGiveUp() {
+    battleSocket.reportDnf();
+    stopTimer();
+    // Stay on game board — leaderboard will appear when all players finish
+}
+
+function handleBattleLeave() {
+    router.push('/');
+}
+
 const screen = ref('game');
 const animateBoard = ref(false);
 const { theme, isDark: darkMode, toggleDarkMode } = useDarkMode();
@@ -119,6 +155,16 @@ watch(won, (val) => {
 watch(gameOver, (val) => {
     if (!val) return;
     stopTimer();
+
+    if (isBattleMode.value) {
+        if (won.value) {
+            battleSocket.reportFinished(elapsedSeconds.value);
+            showConfetti.value = true;
+            celebrate();
+        }
+        // Don't navigate to outro in battle — wait for leaderboard from server
+        return;
+    }
 
     if (isStoryMode.value && storyLevel.value) {
         if (won.value) {
@@ -162,6 +208,17 @@ watch(gameOver, (val) => {
 watch(
     guesses,
     () => {
+        if (isBattleMode.value) {
+            const lastGuess = guesses.value[guesses.value.length - 1];
+            if (lastGuess?.feedback?.blackPegs > 0) {
+                battleSocket.reportCorrectPeg();
+            }
+            const remaining = gameConfig.value.MAX_GUESSES - guesses.value.length;
+            if (remaining === 1 || remaining === 2) {
+                battleSocket.reportDanger();
+            }
+            return;
+        }
         if (!isStoryMode.value && currentSeed.value?.startsWith(dailySeed() + '-') && !screen.value.startsWith('review')) {
             saveDailyState(dailySeed(), currentMode.value, {
                 guesses: guesses.value,
@@ -177,6 +234,7 @@ watch(
 // ── Helpers ────────────────────────────────────────────────────────────────
 function handleConfettiDone() {
     showConfetti.value = false;
+    if (isBattleMode.value) return; // stay on board — leaderboard will appear
     if (screen.value === 'game') screen.value = 'outro';
 }
 
@@ -334,7 +392,17 @@ useKeyboardInput({
 onMounted(async () => {
     const { type, mode, level } = route.query;
     let timerResumeFrom = 0;
-    if (type === 'story') {
+    if (type === 'battle') {
+        // Seed comes from the battle store (set by game:go socket event)
+        if (battleStore.battleSeed) {
+            startSeededGame(battleStore.battleSeed, 'classic');
+            screen.value = 'game';
+        } else {
+            // No seed yet — shouldn't happen if navigation is correct, send back
+            router.push('/');
+            return;
+        }
+    } else if (type === 'story') {
         handlePlayStory(Number(level));
     } else if (type === 'random') {
         handlePlayRandom(mode || 'classic');
@@ -419,6 +487,18 @@ onUnmounted(() => {
                     @submit="handleSubmitGuess"
                 />
 
+                <div v-if="isBattleMode" class="battle-bar">
+                    <span v-if="gameOver" class="battle-waiting">
+                        Waiting for {{ stillPlayingCount }} player{{ stillPlayingCount !== 1 ? 's' : '' }}...
+                    </span>
+                    <span v-else class="battle-playing-count">
+                        {{ stillPlayingCount }} still playing
+                    </span>
+                    <AppButton v-if="!gameOver" variant="ghost" size="sm" @click="handleGiveUp">
+                        Give Up
+                    </AppButton>
+                </div>
+
                 <div v-if="screen === 'review'" class="review-bar">
                     <AppButton
                         variant="ghost"
@@ -453,6 +533,22 @@ onUnmounted(() => {
     </template>
 
     <ConfettiCanvas v-if="showConfetti" @done="handleConfettiDone" />
+
+    <!-- Battle: toasts -->
+    <transition-group name="toast" tag="div" class="battle-toasts">
+        <div v-for="n in battleStore.notifications" :key="n.id" class="battle-toast">
+            {{ n.message }}
+        </div>
+    </transition-group>
+
+    <!-- Battle: next-round countdown (go again) -->
+    <BattleCountdown v-if="isBattleMode && battleStore.phase === 'countdown'" />
+
+    <!-- Battle: results leaderboard -->
+    <BattleLeaderboard
+        v-if="isBattleMode && battleStore.phase === 'finished'"
+        @leave="handleBattleLeave"
+    />
 </template>
 
 <style scoped>
@@ -501,4 +597,56 @@ main {
 @media (max-width: 480px) {
     footer { font-size: 0.75em; }
 }
+
+.battle-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 18px;
+    flex-shrink: 0;
+    gap: 8px;
+}
+
+.battle-playing-count {
+    font-size: 0.8em;
+    color: var(--text-secondary);
+    font-weight: 600;
+}
+
+.battle-waiting {
+    font-size: 0.8em;
+    color: var(--text-secondary);
+    font-weight: 600;
+}
+
+/* Battle toast notifications */
+.battle-toasts {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: center;
+    z-index: 150;
+    pointer-events: none;
+}
+
+.battle-toast {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 100px;
+    padding: 8px 18px;
+    font-size: 0.85em;
+    font-weight: 600;
+    color: var(--text-primary);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    white-space: nowrap;
+}
+
+.toast-enter-active { transition: all 0.25s ease; }
+.toast-leave-active { transition: all 0.3s ease; }
+.toast-enter-from { opacity: 0; transform: translateY(12px); }
+.toast-leave-to { opacity: 0; transform: translateY(-8px); }
 </style>

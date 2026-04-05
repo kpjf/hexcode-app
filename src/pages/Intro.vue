@@ -1,15 +1,17 @@
 <script setup>
-import { computed, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '../stores/auth.js';
 import { useStatsStore } from '../stores/stats.js';
 import { loadDailyState } from '../game/useDailyStorage.js';
 import { dailySeed } from '../utils/date.js';
 import IntroScreen from '../components/IntroScreen.vue';
+import BattleRoomDialog from '../components/BattleRoomDialog.vue';
 
 const router = useRouter();
 const authStore = useAuthStore();
 const statsStore = useStatsStore();
+const showBattleDialog = ref(false);
 
 const date = dailySeed();
 
@@ -44,6 +46,11 @@ function handlePlayRandom(mode) {
 function handleStory() {
     router.push('/story');
 }
+
+function handleBattleStart() {
+    showBattleDialog.value = false;
+    router.push({ path: '/game', query: { type: 'battle' } });
+}
 </script>
 
 <template>
@@ -53,9 +60,16 @@ function handleStory() {
         @play-daily="handlePlayDaily"
         @play-random="handlePlayRandom"
         @story="handleStory"
+        @battle="showBattleDialog = true"
         @login="router.push('/login')"
         @signup="router.push('/signup')"
         @logout="authStore.logout()"
         @stats="router.push('/stats')"
+    />
+
+    <BattleRoomDialog
+        v-if="showBattleDialog"
+        @close="showBattleDialog = false"
+        @game-start="handleBattleStart"
     />
 </template>
