@@ -1,6 +1,7 @@
 <script setup>
-import { ref, watch } from 'vue';
+import { ref } from 'vue';
 import AppButton from './AppButton.vue';
+import AppDialog from './AppDialog.vue';
 
 const props = defineProps({
     visible: { type: Boolean, required: true },
@@ -8,19 +9,7 @@ const props = defineProps({
 
 const emit = defineEmits(['close']);
 
-const dialogEl = ref(null);
 const dontShowAgain = ref(false);
-
-watch(
-    () => props.visible,
-    (val) => {
-        if (val) {
-            dialogEl.value?.showModal();
-        } else {
-            dialogEl.value?.close();
-        }
-    },
-);
 
 function handleClose() {
     if (dontShowAgain.value) {
@@ -28,27 +17,10 @@ function handleClose() {
     }
     emit('close');
 }
-
-// Native Escape key fires the 'cancel' event on <dialog>
-function handleCancel(e) {
-    e.preventDefault();
-    handleClose();
-}
 </script>
 
 <template>
-    <dialog ref="dialogEl" @cancel="handleCancel" @click.self="handleClose">
-        <button class="close-btn" aria-label="Close" @click="handleClose">
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                <path
-                    d="M1 1L13 13M13 1L1 13"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                />
-            </svg>
-        </button>
-
+    <AppDialog v-if="visible" max-width="420px" @close="handleClose">
         <h3>How to Play</h3>
         <p class="subtitle">
             Crack the hidden color code. After each guess, pegs tell you how close you are.
@@ -124,45 +96,11 @@ function handleCancel(e) {
             </label>
             <AppButton @click="handleClose">Got it</AppButton>
         </div>
-    </dialog>
+    </AppDialog>
 </template>
 
 <style scoped>
-dialog {
-    background: var(--bg-modal);
-    color: var(--text-primary);
-    border: 1px solid var(--border-color);
-    padding: 28px 24px;
-    max-width: 420px;
-    width: 90%;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-}
-
-dialog::backdrop {
-    background: rgba(0, 0, 0, 0.5);
-}
-
-.close-btn {
-    position: absolute;
-    top: 16px;
-    right: 16px;
-    background: none;
-    border: none;
-    cursor: pointer;
-    color: var(--text-secondary);
-    padding: 4px;
-    line-height: 0;
-}
-
-.close-btn:hover {
-    color: var(--text-primary);
-}
-
-dialog h3 {
+h3 {
     font-size: 1.15em;
     margin-bottom: 8px;
     padding-right: 24px;
@@ -181,7 +119,7 @@ dialog h3 {
     gap: 14px;
     margin-bottom: 24px;
     padding: 16px;
-    background: var(--bg-primary);
+    background: var(--bg-secondary);
     border: 1px solid var(--border-color);
 }
 

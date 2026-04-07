@@ -507,16 +507,6 @@ onUnmounted(() => {
                     </AppButton>
                 </div>
 
-                <div v-if="screen === 'review'" class="review-bar">
-                    <AppButton
-                        variant="ghost"
-                        :disabled="!currentStats"
-                        :title="currentStats ? undefined : 'Play a daily puzzle to track stats'"
-                        @click="screen = 'stats'"
-                    >
-                        View Results
-                    </AppButton>
-                </div>
             </main>
         </div>
 

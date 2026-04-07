@@ -63,6 +63,21 @@ defineEmits(['toggle-dark-mode', 'new-game', 'share', 'how-to-play']);
                     </svg>
                 </AppButton>
 
+                <RouterLink to="/stats" title="Stats">
+                    <svg
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                        style="display: block; color: var(--text-primary)"
+                    >
+                        <rect x="3" y="12" width="4" height="9" rx="1" stroke="currentColor" stroke-width="1.75"/>
+                        <rect x="10" y="7" width="4" height="14" rx="1" stroke="currentColor" stroke-width="1.75"/>
+                        <rect x="17" y="3" width="4" height="18" rx="1" stroke="currentColor" stroke-width="1.75"/>
+                    </svg>
+                </RouterLink>
+
                 <AppButton
                     v-if="showShare"
                     variant="icon"

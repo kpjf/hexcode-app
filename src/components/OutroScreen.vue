@@ -1,6 +1,7 @@
 <script setup>
-import { computed, onMounted, ref } from 'vue';
+import { computed, ref } from 'vue';
 import AppButton from './AppButton.vue';
+import AppDialog from './AppDialog.vue';
 import { useShareImage } from '../composables/useShareImage.js';
 
 const props = defineProps({
@@ -31,13 +32,6 @@ function starsDisplay(n) {
     return '★'.repeat(n) + '☆'.repeat(3 - n);
 }
 
-const today = new Date().toLocaleDateString('en-US', {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-});
-
 const heading = computed(() => {
     if (!props.won) return 'Unlucky!';
     if (props.guessCount === 1) return 'First try!';
@@ -46,9 +40,6 @@ const heading = computed(() => {
     if (props.guessCount <= 7) return 'You got it!';
     return 'Close call!';
 });
-
-const dialogEl = ref(null);
-onMounted(() => dialogEl.value?.showModal());
 
 const shared = ref(false);
 const { shareResults } = useShareImage();
@@ -70,108 +61,54 @@ async function handleShare() {
 </script>
 
 <template>
-    <dialog ref="dialogEl" @cancel.prevent>
+    <AppDialog @close="$emit('review')">
+        <div class="outro-content">
         <div class="outro-icon">{{ won ? '🎉' : '😞' }}</div>
 
-            <h1 class="outro-title">{{ heading }}</h1>
-            <p class="outro-subtitle">
-                <template v-if="won">
-                    You cracked the code in
-                    <strong>{{ guessCount }}</strong> / {{ maxGuesses }} guesses
-                </template>
-                <template v-else>
-                    Better luck next time
-                </template>
-            </p>
-
-            <!-- Story mode: stars + coins earned -->
-            <div v-if="isStory && won" class="story-result-block">
-                <div class="story-stars">{{ starsDisplay(storyStars) }}</div>
-                <div class="story-coins">
-                    <span class="coins-icon">🪙</span>
-                    <span class="coins-amount">+{{ storyCoins }}</span>
-                    <span class="coins-label">coins earned</span>
-                </div>
-                <p v-if="storyLevel" class="story-level-name">Level {{ storyLevel.id }} — {{ storyLevel.title }}</p>
-            </div>
-
-            <div class="secret-code-block">
-                <span class="secret-code-label">The secret code</span>
-                <div class="secret-code">
-                    <div v-for="(color, i) in secretCode" :key="i" class="peg" :class="color" />
-                </div>
-            </div>
-
-            <div v-if="isDaily" class="outro-puzzle-date">
-                <span class="date-label">Today's Puzzle</span>
-                <span class="date-value">{{ today }}</span>
-            </div>
-
-            <!-- Story mode actions -->
-            <template v-if="isStory">
-                <div class="outro-actions">
-                    <AppButton
-                        v-if="won && nextStoryLevelAvailable"
-                        class="outro-btn"
-                        @click="$emit('next-story-level')"
-                    >
-                        Next Level →
-                    </AppButton>
-                    <AppButton variant="ghost" size="sm" full class="review-toggle-btn" @click="$emit('review')">
-                        Review Your Solution
-                    </AppButton>
-                </div>
-                <div class="outro-footer">
-                    <AppButton variant="ghost" size="sm" full @click="$emit('play-again')">Back to Map</AppButton>
-                </div>
+        <h1 class="outro-title">{{ heading }}</h1>
+        <p class="outro-subtitle">
+            <template v-if="won">
+                You cracked the code in
+                <strong>{{ guessCount }}</strong> / {{ maxGuesses }} guesses
             </template>
-
-            <!-- Standard actions -->
             <template v-else>
-                <div class="outro-actions">
-                    <AppButton class="outro-btn" @click="handleShare">
-                        {{ shared ? 'Saved!' : 'Share Results' }}
-                    </AppButton>
-                    <AppButton
-                        variant="secondary"
-                        class="outro-btn"
-                        :disabled="!stats"
-                        :title="stats ? undefined : 'Play a daily puzzle to track stats'"
-                        @click="$emit('show-stats')"
-                    >
-                        Stats
-                    </AppButton>
-                </div>
-
-                <AppButton variant="ghost" size="sm" full class="review-toggle-btn" @click="$emit('review')">
-                    Review Your Solution
-                </AppButton>
-
-                <div class="outro-footer">
-                    <AppButton variant="ghost" size="sm" full @click="$emit('play-again')">Play Again</AppButton>
-                </div>
+                Better luck next time
             </template>
-    </dialog>
+        </p>
+
+        <!-- Story mode: stars + coins earned -->
+        <div v-if="isStory && won" class="story-result-block">
+            <div class="story-stars">{{ starsDisplay(storyStars) }}</div>
+            <div class="story-coins">
+                <span class="coins-icon">🪙</span>
+                <span class="coins-amount">+{{ storyCoins }}</span>
+                <span class="coins-label">coins earned</span>
+            </div>
+            <p v-if="storyLevel" class="story-level-name">Level {{ storyLevel.id }} — {{ storyLevel.title }}</p>
+        </div>
+
+        <div class="secret-code-block">
+            <span class="secret-code-label">The secret code</span>
+            <div class="secret-code">
+                <div v-for="(color, i) in secretCode" :key="i" class="peg" :class="color" />
+            </div>
+        </div>
+
+        <!-- Story mode actions -->
+        <template v-if="isStory && won && nextStoryLevelAvailable">
+            <div class="outro-actions">
+                <AppButton class="outro-btn" @click="$emit('next-story-level')">
+                    Next Level →
+                </AppButton>
+            </div>
+        </template>
+        </div>
+    </AppDialog>
 </template>
 
 <style scoped>
-dialog {
-    background: var(--bg-modal);
-    color: var(--text-primary);
-    border: 1px solid var(--border-color);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
-    padding: 40px 32px;
-    max-width: 400px;
-    width: 90%;
+.outro-content {
     text-align: center;
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-}
-
-dialog::backdrop {
-    background: rgba(0, 0, 0, 0.5);
 }
 
 .outro-icon {
@@ -199,8 +136,6 @@ dialog::backdrop {
 }
 
 .secret-code-block {
-    background: var(--bg-secondary);
-    border: 1px solid var(--border-color);
     padding: 16px;
     margin-bottom: 24px;
     display: flex;
@@ -227,30 +162,6 @@ dialog::backdrop {
     cursor: default;
 }
 
-.outro-puzzle-date {
-    background: var(--bg-secondary);
-    border: 1px solid var(--border-color);
-    padding: 12px 16px;
-    margin-bottom: 24px;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-
-.date-label {
-    font-size: 0.75em;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--text-secondary);
-}
-
-.date-value {
-    font-size: 0.95em;
-    font-weight: 600;
-    color: var(--text-primary);
-}
-
 .outro-actions {
     display: flex;
     gap: 10px;
@@ -259,15 +170,6 @@ dialog::backdrop {
 
 .outro-btn {
     flex: 1;
-}
-
-.review-toggle-btn {
-    margin-bottom: 12px;
-}
-
-.outro-footer {
-    padding-top: 16px;
-    border-top: 1px solid var(--border-color);
 }
 
 .story-result-block {
@@ -316,10 +218,6 @@ dialog::backdrop {
 }
 
 @media (max-width: 480px) {
-    dialog {
-        padding: 32px 24px;
-    }
-
     .outro-icon {
         font-size: 2.5em;
     }

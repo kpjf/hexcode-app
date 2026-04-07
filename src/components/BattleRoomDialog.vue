@@ -3,6 +3,7 @@ import { ref, watch } from 'vue';
 import { useBattleStore } from '../stores/battle.js';
 import { useBattleSocket } from '../composables/useBattleSocket.js';
 import AppButton from './AppButton.vue';
+import AppDialog from './AppDialog.vue';
 import BattleCountdown from './BattleCountdown.vue';
 
 const emit = defineEmits(['close', 'game-start']);
@@ -55,8 +56,8 @@ watch(
 <template>
     <BattleCountdown v-if="view === 'countdown'" />
 
-    <div class="battle-overlay" @click.self="handleClose">
-        <div class="battle-dialog">
+    <AppDialog max-width="360px" @close="handleClose">
+        <div class="dialog-body">
             <!-- ── Entry: choose create or join ──────────────────────────── -->
             <template v-if="view === 'entry'">
                 <h2 class="dialog-title">Battle Mode</h2>
@@ -89,8 +90,6 @@ watch(
                         Join a Room
                     </AppButton>
                 </div>
-
-                <AppButton variant="ghost" size="sm" @click="handleClose">Cancel</AppButton>
             </template>
 
             <!-- ── Join form ──────────────────────────────────────────────── -->
@@ -174,40 +173,19 @@ watch(
                     Start Game
                 </AppButton>
                 <p v-else class="waiting-hint">Waiting for the host to start...</p>
-
-                <AppButton variant="ghost" size="sm" class="leave-btn" @click="handleClose">
-                    Leave
-                </AppButton>
             </template>
-
-            <!-- Countdown handled by BattleCountdown overlay (rendered outside dialog) -->
         </div>
-    </div>
+    </AppDialog>
 </template>
 
 <style scoped>
-.battle-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.6);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 100;
-    padding: 16px;
-}
-
-.battle-dialog {
-    background: var(--bg-primary);
-    border-radius: 16px;
-    padding: 28px 24px;
-    width: 100%;
-    max-width: 360px;
+.dialog-body {
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 16px;
     text-align: center;
+    width: 100%;
 }
 
 .dialog-title {
@@ -247,7 +225,7 @@ watch(
     padding: 10px 14px;
     border-radius: 8px;
     border: 1px solid var(--border-color);
-    background: var(--bg-secondary);
+    background: #ffffff;
     color: var(--text-primary);
     font-size: 1em;
     font-family: inherit;
@@ -342,9 +320,4 @@ watch(
     font-size: 0.85em;
     margin: 0;
 }
-
-.leave-btn {
-    margin-top: 4px;
-}
-
 </style>

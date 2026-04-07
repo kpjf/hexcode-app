@@ -64,9 +64,9 @@ const emit = defineEmits([
                     >
                         Random Game
                     </AppButton>
-                    <AppButton variant="ghost" size="lg" on-dark @click="emit('story')">
+                    <!-- <AppButton variant="ghost" size="lg" on-dark @click="emit('story')">
                         📖 Story Mode
-                    </AppButton>
+                    </AppButton> -->
                     <AppButton variant="ghost" size="lg" on-dark @click="emit('battle')">
                         ⚔️ Battle Mode
                     </AppButton>
