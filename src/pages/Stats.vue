@@ -5,7 +5,7 @@ import { useStatsStore } from '../stores/stats.js';
 import { MODES } from '../game/config.js';
 import AppButton from '../components/AppButton.vue';
 import { useDarkMode } from '../composables/useDarkMode.js';
-import { loadDailyState } from '../game/useDailyStorage.js';
+import { todayStr } from '../utils/date.js';
 
 const router = useRouter();
 const route = useRoute();
@@ -13,12 +13,14 @@ const statsStore = useStatsStore();
 const activeTab = ref('quick');
 useDarkMode();
 
-const today = new Date().toISOString().slice(0, 10);
+const today = todayStr();
 
 function todayGuessCount(mode) {
-    const saved = loadDailyState(today, mode);
-    if (!saved || !saved.gameOver) return null;
-    return saved.won ? saved.guesses.length : null;
+    const dailies = statsStore.stats?.[mode]?.dailies;
+    if (!dailies) return null;
+    const entries = Array.isArray(dailies) ? dailies : Object.values(dailies);
+    const entry = entries.find(d => d.date?.slice(0, 10) === today);
+    return entry?.guessCount ?? null;
 }
 
 onMounted(() => {
@@ -248,7 +250,7 @@ function maxDistCount(mode) {
 }
 
 .dist-label.today {
-    color: var(--peg-green);
+    color: #1a7a3c;
 }
 
 .dist-bar-wrap {
@@ -275,7 +277,7 @@ function maxDistCount(mode) {
 }
 
 .dist-bar.today {
-    background: var(--peg-green);
+    background: #1a7a3c;
 }
 
 .loading {
