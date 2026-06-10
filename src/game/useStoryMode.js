@@ -1,6 +1,6 @@
 import { ref } from 'vue';
 import { STORY_LEVELS } from './storyLevels.js';
-import { storyApi } from '../utils/auth-client.js';
+import { storyApi, legacyStoryApi } from '../utils/auth-client.js';
 import { useAuthStore } from '../stores/auth.js';
 import { todayStr } from '../utils/date.js';
 
@@ -46,6 +46,33 @@ export function useStoryMode() {
     const raw = loadProgress();
     const progress = ref({ ...emptyProgress(), ...raw });
 
+    // Assemble the full story document persisted to zuul-data. dailyAttempts is
+    // rebuilt from the local attempts map (keyed `${levelId}-${YYYY-MM-DD}`).
+    function buildStoryDoc() {
+        const attemptsMap = loadAttempts();
+        const dailyAttempts = Object.entries(attemptsMap).map(([key, attemptsUsed]) => {
+            const dash = key.indexOf('-');
+            return { levelId: Number(key.slice(0, dash)), date: key.slice(dash + 1), attemptsUsed };
+        });
+        return {
+            coins: progress.value.coins ?? 0,
+            storyMode: {
+                highestUnlocked: progress.value.highestUnlocked ?? 1,
+                completedLevels: progress.value.completedLevels ?? [],
+                dailyAttempts,
+            },
+        };
+    }
+
+    // Best-effort write of the whole story doc — replaces the old granular
+    // /complete, /attempt and /coins endpoints (zuul-data is a dumb store; the
+    // client already owns all the logic, so one PUT of the result is enough).
+    function persist() {
+        const authStore = useAuthStore();
+        if (!authStore.isAuthenticated) return;
+        storyApi.save(buildStoryDoc()).catch(() => {});
+    }
+
     function getLevelState(levelId) {
         if (progress.value.completedLevels?.some((l) => l.levelId === levelId)) return 'completed';
         if (levelId <= (progress.value.highestUnlocked ?? 1)) return 'available';
@@ -67,12 +94,7 @@ export function useStoryMode() {
         const attempts = loadAttempts();
         attempts[key] = (attempts[key] ?? 0) + 1;
         saveAttempts(attempts);
-
-        // Best-effort API sync
-        const authStore = useAuthStore();
-        if (authStore.isAuthenticated) {
-            storyApi.attempt(levelId, todayStr()).catch(() => {});
-        }
+        persist();
     }
 
     function completeLevel(levelId, guesses, maxGuesses, timeSeconds, coinsSpent = 0) {
@@ -101,12 +123,7 @@ export function useStoryMode() {
 
         progress.value.coins = (progress.value.coins ?? 0) + coinsEarned - coinsSpent;
         saveProgress(progress.value);
-
-        // Best-effort API sync
-        const authStore = useAuthStore();
-        if (authStore.isAuthenticated) {
-            storyApi.complete(entry).catch(() => {});
-        }
+        persist();
 
         return { coinsEarned, stars };
     }
@@ -121,13 +138,31 @@ export function useStoryMode() {
         return progress.value.completedLevels?.find((l) => l.levelId === levelId) ?? null;
     }
 
-    // Sync server data down on login
+    // Sync server data down on login (with one-time migration from hexcode-api)
     async function syncFromServer() {
         const authStore = useAuthStore();
         if (!authStore.isAuthenticated) return;
         try {
-            const data = await storyApi.get();
-            if (!data?.storyMode) return;
+            let data = await storyApi.get(); // { coins, storyMode } | null
+
+            // One-time migration: pull the player's old hexcode-api progress into zuul-data.
+            if (!data?.storyMode) {
+                const old = await legacyStoryApi.get();
+                if (old?.storyMode) {
+                    data = { coins: old.coins ?? 0, storyMode: old.storyMode };
+                    await storyApi.save(data).catch(() => {});
+                }
+            }
+
+            // Nothing on the server yet — push local progress up so it isn't lost.
+            if (!data?.storyMode) {
+                const hasLocal =
+                    (progress.value.completedLevels?.length ?? 0) > 0 ||
+                    (progress.value.highestUnlocked ?? 1) > 1 ||
+                    (progress.value.coins ?? 0) > 0;
+                if (hasLocal) persist();
+                return;
+            }
 
             const server = data.storyMode;
             const local = progress.value;
@@ -161,11 +196,7 @@ export function useStoryMode() {
     function awardCoins(amount) {
         progress.value.coins = (progress.value.coins ?? 0) + amount;
         saveProgress(progress.value);
-
-        const authStore = useAuthStore();
-        if (authStore.isAuthenticated) {
-            storyApi.addCoins(amount).catch(() => {});
-        }
+        persist();
     }
 
     return {

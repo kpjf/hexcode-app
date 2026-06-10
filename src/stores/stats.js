@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { statsApi } from '../utils/auth-client.js'
+import { statsApi, legacyStatsApi } from '../utils/auth-client.js'
 import { useAuthStore } from './auth.js'
 
 const STORAGE_KEY = 'hexcode-stats'
@@ -59,7 +59,16 @@ export const useStatsStore = defineStore('stats', () => {
                     await statsApi.post(stripMeta(local))
                     stats.value = local
                 } else {
-                    stats.value = {}
+                    // Otherwise migrate the player's old hexcode-api stats into zuul-data
+                    const legacy = await legacyStatsApi.get()
+                    const legacyClean = legacy ? normalizeDates(stripMeta(legacy)) : {}
+                    if (Object.keys(legacyClean).length > 0) {
+                        await statsApi.post(legacyClean)
+                        saveLocalStats(legacyClean)
+                        stats.value = legacyClean
+                    } else {
+                        stats.value = {}
+                    }
                 }
             } else {
                 // Server is source of truth — use it as-is, no local merge

@@ -98,7 +98,11 @@ class AuthClient {
 }
 
 const client = new AuthClient(`${import.meta.env.VITE_AUTH_SERVICE_URL}/${import.meta.env.VITE_APP_SLUG}`)
-const dataClient = new AuthClient(import.meta.env.VITE_DATA_API_URL)
+// zuul-data universal store — per-user JSON addressed by bucket/key
+const store = new AuthClient(`${import.meta.env.VITE_DATA_SERVICE_URL}/data/${import.meta.env.VITE_APP_SLUG}`)
+// Legacy hexcode-api: still hosts the battle socket, and read once to migrate a
+// player's stats/story into zuul-data.
+const legacy = new AuthClient(import.meta.env.VITE_DATA_API_URL)
 
 export const authApi = {
   login: (email, password) => client.post('/auth/login', { email, password }),
@@ -125,14 +129,39 @@ export const sessionApi = {
   invalidateAllSessions: () => client.delete('/sessions/me'),
 }
 
+// Stats & story are single per-user documents in zuul-data:
+//   bucket "stats" / key "default" → { classic, quick }
+//   bucket "story" / key "default" → { coins, storyMode }
+// zuul-data wraps the body in { data }; a 404 means no document yet (treat as empty).
 export const statsApi = {
-  get: () => dataClient.get('/v1/stats'),
-  post: (data) => dataClient.post('/v1/stats', data),
+  get: () =>
+    store
+      .get('/stats/default')
+      .then((d) => d?.data ?? {})
+      .catch((e) => {
+        if (/not found/i.test(e.message)) return {}
+        throw e
+      }),
+  post: (data) => store.put('/stats/default', data),
 }
 
 export const storyApi = {
-  get: () => dataClient.get('/v1/story'),
-  complete: (data) => dataClient.post('/v1/story/complete', data),
-  attempt: (levelId, date) => dataClient.post('/v1/story/attempt', { levelId, date }),
-  addCoins: (amount) => dataClient.post('/v1/story/coins', { amount }),
+  get: () =>
+    store
+      .get('/story/default')
+      .then((d) => d?.data ?? null)
+      .catch((e) => {
+        if (/not found/i.test(e.message)) return null
+        throw e
+      }),
+  save: (doc) => store.put('/story/default', doc),
+}
+
+// Read-only legacy hexcode-api — best-effort, used once to migrate an existing
+// player's data into zuul-data. Returns null if the old API is gone or empty.
+export const legacyStatsApi = {
+  get: () => legacy.get('/v1/stats').catch(() => null),
+}
+export const legacyStoryApi = {
+  get: () => legacy.get('/v1/story').catch(() => null),
 }
