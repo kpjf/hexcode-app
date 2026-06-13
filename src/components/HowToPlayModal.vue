@@ -1,15 +1,43 @@
 <script setup>
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import AppButton from './AppButton.vue';
 import AppDialog from './AppDialog.vue';
 
 const props = defineProps({
     visible: { type: Boolean, required: true },
+    codeLength: { type: Number, default: 4 },
 });
 
 const emit = defineEmits(['close']);
 
 const dontShowAgain = ref(false);
+
+const exampleRows = computed(() => {
+    const length = Math.max(2, Math.min(props.codeLength, 6));
+    const pegSets = [
+        ['purple', 'orange', 'cyan', 'pink', 'green', 'yellow'],
+        ['blue', 'red', 'yellow', 'orange', 'purple', 'cyan'],
+        ['red', 'blue', 'yellow', 'green', 'orange', 'purple'],
+    ];
+
+    return [
+        {
+            pegs: pegSets[0].slice(0, length),
+            keys: Array.from({ length }, () => 'empty'),
+            label: 'No pegs — none of these colors are in the code',
+        },
+        {
+            pegs: pegSets[1].slice(0, length),
+            keys: Array.from({ length }, (_, index) => index < Math.min(2, length) ? 'white' : 'empty'),
+            label: 'White — right color, wrong position',
+        },
+        {
+            pegs: pegSets[2].slice(0, length),
+            keys: Array.from({ length }, () => 'black'),
+            label: 'Black — right color and position',
+        },
+    ];
+});
 
 function handleClose() {
     if (dontShowAgain.value) {
@@ -27,64 +55,26 @@ function handleClose() {
         </p>
 
         <div class="examples">
-            <!-- Row 1: No match -->
-            <div class="example-row">
+            <div v-for="row in exampleRows" :key="row.label" class="example-row">
                 <div class="example-pegs">
-                    <div class="peg purple" style="--peg-size: 32px"></div>
-                    <div class="peg orange" style="--peg-size: 32px"></div>
-                    <div class="peg cyan" style="--peg-size: 32px"></div>
-                    <div class="peg pink" style="--peg-size: 32px"></div>
+                    <div
+                        v-for="(peg, index) in row.pegs"
+                        :key="`${row.label}-${peg}-${index}`"
+                        class="peg"
+                        :class="peg"
+                        style="--peg-size: 32px"
+                    ></div>
                 </div>
                 <div>
                     <div class="example-key-pegs">
-                        <div class="key-peg empty"></div>
-                        <div class="key-peg empty"></div>
-                        <div class="key-peg empty"></div>
-                        <div class="key-peg empty"></div>
+                        <div
+                            v-for="(keyPeg, index) in row.keys"
+                            :key="`${row.label}-${keyPeg}-${index}`"
+                            class="key-peg"
+                            :class="keyPeg"
+                        ></div>
                     </div>
-                    <p class="example-label">No pegs — none of these colors are in the code</p>
-                </div>
-            </div>
-
-            <!-- Row 2: White pegs -->
-            <div class="example-row">
-                <div class="example-pegs">
-                    <div class="peg blue" style="--peg-size: 32px"></div>
-                    <div class="peg red" style="--peg-size: 32px"></div>
-                    <div class="peg yellow" style="--peg-size: 32px"></div>
-                    <div class="peg orange" style="--peg-size: 32px"></div>
-                </div>
-                <div>
-                    <div class="example-key-pegs">
-                        <div class="key-peg white"></div>
-                        <div class="key-peg white"></div>
-                        <div class="key-peg empty"></div>
-                        <div class="key-peg empty"></div>
-                    </div>
-                    <p class="example-label">
-                        <strong>White</strong> — right color, wrong position
-                    </p>
-                </div>
-            </div>
-
-            <!-- Row 3: All black (fully correct) -->
-            <div class="example-row">
-                <div class="example-pegs">
-                    <div class="peg red" style="--peg-size: 32px"></div>
-                    <div class="peg blue" style="--peg-size: 32px"></div>
-                    <div class="peg yellow" style="--peg-size: 32px"></div>
-                    <div class="peg green" style="--peg-size: 32px"></div>
-                </div>
-                <div>
-                    <div class="example-key-pegs">
-                        <div class="key-peg black"></div>
-                        <div class="key-peg black"></div>
-                        <div class="key-peg black"></div>
-                        <div class="key-peg black"></div>
-                    </div>
-                    <p class="example-label">
-                        <strong>Black</strong> — right color <em>and</em> position
-                    </p>
+                    <p class="example-label">{{ row.label }}</p>
                 </div>
             </div>
         </div>

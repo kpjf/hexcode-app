@@ -77,14 +77,19 @@ watch(
                 <div v-if="store.error" class="error-msg">{{ store.error }}</div>
 
                 <div class="entry-actions">
-                    <AppButton size="lg" full :disabled="!nameInput.trim()" @click="handleCreate">
-                        Create Room
+                    <AppButton
+                        size="lg"
+                        full
+                        :disabled="!nameInput.trim() || store.isConnecting"
+                        @click="handleCreate"
+                    >
+                        {{ store.isConnecting ? 'Creating...' : 'Create Room' }}
                     </AppButton>
                     <AppButton
                         variant="ghost"
                         size="lg"
                         full
-                        :disabled="!nameInput.trim()"
+                        :disabled="!nameInput.trim() || store.isConnecting"
                         @click="view = 'join-form'"
                     >
                         Join a Room
@@ -124,12 +129,12 @@ watch(
                     <AppButton
                         size="lg"
                         full
-                        :disabled="!nameInput.trim() || codeInput.trim().length !== 4"
+                        :disabled="!nameInput.trim() || codeInput.trim().length !== 4 || store.isConnecting"
                         @click="handleJoin"
                     >
-                        Join Room
+                        {{ store.isConnecting ? 'Joining...' : 'Join Room' }}
                     </AppButton>
-                    <AppButton variant="ghost" size="sm" @click="view = 'entry'">Back</AppButton>
+                    <AppButton variant="ghost" size="sm" :disabled="store.isConnecting" @click="view = 'entry'">Back</AppButton>
                 </div>
             </template>
 

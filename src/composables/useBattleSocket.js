@@ -16,19 +16,22 @@ export function useBattleSocket() {
     if (socket?.connected) return
 
     socket = io(`${getSocketUrl()}/battle`, {
-      transports: ['websocket'],
+        transports: ['websocket'],
     })
 
     socket.on('connect', () => {
       store.mySocketId = socket.id
+      store.error = null
     })
 
     socket.on('room:created', ({ roomCode }) => {
       store.roomCode = roomCode
+      store.isConnecting = false
     })
 
     socket.on('room:joined', ({ roomCode }) => {
       store.roomCode = roomCode
+      store.isConnecting = false
     })
 
     socket.on('room:updated', ({ players, phase, round, ownerSocketId }) => {
@@ -36,6 +39,7 @@ export function useBattleSocket() {
       store.phase = phase
       store.round = round
       store.ownerSocketId = ownerSocketId
+      store.isConnecting = false
     })
 
     socket.on('game:countdown', ({ seconds }) => {
@@ -67,6 +71,12 @@ export function useBattleSocket() {
 
     socket.on('error', ({ message }) => {
       store.error = message
+      store.isConnecting = false
+    })
+
+    socket.on('connect_error', () => {
+      store.error = 'Could not connect to Battle Mode. Please try again in a moment.'
+      store.isConnecting = false
     })
   }
 
@@ -80,6 +90,7 @@ export function useBattleSocket() {
     connect()
     store.playerName = playerName
     store.error = null
+    store.isConnecting = true
     socket.emit('room:create', { playerName })
   }
 
@@ -87,6 +98,7 @@ export function useBattleSocket() {
     connect()
     store.playerName = playerName
     store.error = null
+    store.isConnecting = true
     socket.emit('room:join', { roomCode: roomCode.toUpperCase(), playerName })
   }
 

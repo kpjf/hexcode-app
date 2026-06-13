@@ -155,7 +155,7 @@ async function handleReset() {
 }
 
 // ── Dialog open/close ─────────────────────────────────────────────────────
-const appName = import.meta.env.VITE_APP_NAME || 'App';
+const appName = import.meta.env.VITE_APP_NAME || 'HEXCode';
 
 function openForRoute(path) {
     const p = AUTH_PANELS[path];

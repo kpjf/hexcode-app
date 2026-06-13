@@ -14,6 +14,10 @@ defineProps({
         type: Boolean,
         default: false,
     },
+    showStats: {
+        type: Boolean,
+        default: true,
+    },
     mode: {
         type: String,
         default: null,
@@ -67,7 +71,7 @@ defineEmits(['toggle-dark-mode', 'new-game', 'share', 'how-to-play']);
                     </svg>
                 </AppButton>
 
-                <RouterLink :to="mode ? `/stats?tab=${mode}` : '/stats'" title="Stats">
+                <RouterLink v-if="showStats" :to="mode ? `/stats?tab=${mode}` : '/stats'" title="Stats">
                     <svg
                         width="20"
                         height="20"
