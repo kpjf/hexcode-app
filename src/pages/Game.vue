@@ -310,6 +310,7 @@ async function handlePlayDaily(mode) {
 }
 
 function handlePlayRandom(mode) {
+    currentMode.value = mode;
     startRandomGame(mode);
     screen.value = 'game';
 }
@@ -465,6 +466,7 @@ onUnmounted(() => {
         <TopMenu
             :theme="theme"
             :mode="currentMode"
+            :show-stats="!isStoryMode && !isBattleMode"
             :timer="!gameOver || screen === 'review' ? formattedTime : null"
             :show-share="screen === 'review'"
             @toggle-dark-mode="toggleDarkMode"
@@ -537,6 +539,7 @@ onUnmounted(() => {
 
         <HowToPlayModal
             :visible="showHowToPlay"
+            :code-length="gameConfig.CODE_LENGTH"
             @close="showHowToPlay = false"
         />
 

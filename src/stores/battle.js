@@ -14,6 +14,7 @@ export const useBattleStore = defineStore('battle', () => {
   const battleSeed = ref(null)
   const notifications = ref([]) // [{ id, message }]
   const error = ref(null)
+  const isConnecting = ref(false)
 
   const isOwner = computed(() => !!mySocketId.value && mySocketId.value === ownerSocketId.value)
   const canStart = computed(() => players.value.length >= 2 && isOwner.value && phase.value === 'lobby')
@@ -31,6 +32,7 @@ export const useBattleStore = defineStore('battle', () => {
     battleSeed.value = null
     notifications.value = []
     error.value = null
+    isConnecting.value = false
   }
 
   function addNotification(message) {
@@ -54,6 +56,7 @@ export const useBattleStore = defineStore('battle', () => {
     battleSeed,
     notifications,
     error,
+    isConnecting,
     isOwner,
     canStart,
     reset,

@@ -3,6 +3,9 @@ import pluginVue from 'eslint-plugin-vue';
 import configPrettier from 'eslint-config-prettier';
 
 export default [
+    {
+        ignores: ['dist/**', '.playwright-cli/**', 'output/**'],
+    },
     js.configs.recommended,
     ...pluginVue.configs['flat/recommended'],
     {
